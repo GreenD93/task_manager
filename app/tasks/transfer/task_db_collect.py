@@ -1,4 +1,5 @@
 # coding: utf-8
+import time
 
 from tasks.task import Task
 
@@ -29,7 +30,6 @@ class TaskDBCollecter(Task):
 
     #-------------------------------------
     # init_self
-
     def init_self(self):
         self.collector = DBCollector(
             self.host,
@@ -44,9 +44,8 @@ class TaskDBCollecter(Task):
         pass
 
     def run_self(self):
-
         for item in self.collector.get_items():
-            self.put_output_data(item)
+            self.q_out.put(item)
 
     def done_self(self):
         pass

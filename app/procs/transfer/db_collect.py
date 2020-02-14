@@ -1,5 +1,3 @@
-import sys
-
 from utils.util import *
 from utils.db_utils import *
 from utils.settings import *
@@ -32,7 +30,7 @@ class DBCollector():
                 db.commit()
 
                 has_next = True
-                start_pos = 100
+                start_pos = 20
 
                 while has_next:
 
@@ -42,16 +40,16 @@ class DBCollector():
                             t.reviewId,
                             t.image_url,
                             t.score
-        
+
                         FROM
                             {0} t
-        
+
                         WHERE
                             t.seq < {1}
-        
-                        ORDER BY 
+
+                        ORDER BY
                             t.seq DESC
-        
+
                         LIMIT
                             {2};
                     """.format(

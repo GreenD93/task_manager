@@ -1,9 +1,10 @@
 # coding: utf-8
 
 from multiprocessing import Queue
+
 from utils.util import *
 
-class TaskQueue():
+class TaskQueue(object):
 
     instance_count = 0
 
@@ -14,19 +15,32 @@ class TaskQueue():
         self.name = get_json_value(params, 'name', None)
         self.stop_order = get_json_value(params, 'stop_order', 0)
 
-        pass
+
+        if self.name is None:
+            self.name = 'queue_{:0d}'.format(TaskQueue.instance_count)
 
     def start(self):
+        print('TaskQueue.start')
         self.q.close()
         self.q.join_thread()
-        pass
+
 
     def stop(self):
         self.q.close()
         pass
 
-    def get(self, block=True):
-        return self.q.get(block, timeout=None)
+    def get(self, block=True, timeout=None):
+        return self.q.get(block, timeout)
 
     def put(self, data, block=True, timeout=None):
         return self.q.put(data, block, timeout)
+
+    def empty(self):
+        result = False
+
+        try:
+            result = self.q.empty()
+        except:
+            result = True
+
+        return result

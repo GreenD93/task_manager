@@ -8,7 +8,6 @@
     }
   },
   "tasks_process_all": {
-
     "tx_01_CD": {
       "actor": "DBCollector",
       "comment": "# collect data from db ................................",
@@ -19,7 +18,7 @@
       "q_out": "q0",
       "loop": true,
       "params": {
-        "host": "34.85.112.219",
+        "host": "127.0.0.1",
         "user": "vai",
         "passwd": "wakdlsem",
         "schema": "vai_db",
@@ -28,6 +27,7 @@
     },
 
     "tx_02_LI": {
+      "actor": "ImageLoader",
       "comment": "# 이미지 로딩 ................................",
       "enabled": true,
       "type": "tasks.transfer.task_img_load.TaskImgLoader",

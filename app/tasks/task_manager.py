@@ -7,9 +7,10 @@ from utils.util import *
 
 from tasks.task_queue import TaskQueue
 
+
 class TaskManager():
 
-    #---------------------------------------------
+    # ---------------------------------------------
     # constructor
     def __init__(self):
         self.tasks = {}
@@ -19,7 +20,6 @@ class TaskManager():
         self.type_table = {}
 
         pass
-
 
     def load_tasks_from_profile(self, file_path):
         json_profile = file_to_json(file_path)
@@ -33,13 +33,15 @@ class TaskManager():
         # -------------------------------------
         # TASK READY 상태
 
-        # queue 준비
-        for name, queue in self.queues.items():
-            queue.start()
-
         # task 준비
+
         for name, task in self.tasks.items():
             task.start()
+
+        # queue 준비
+
+        for name, queue in self.queues.items():
+            queue.start()
 
         # -------------------------------------
         # TASK 종료 대기
@@ -47,8 +49,8 @@ class TaskManager():
         for name, task in self.tasks.items():
             task.join()
 
-
     def load_queues(self, json_profile):
+
         for k, json_queue in json_profile['queues'].items():
 
             q = TaskQueue({
@@ -60,16 +62,17 @@ class TaskManager():
 
         self.arr_queues = list(sorted(self.arr_queues, key=lambda x: x.stop_order))
 
-
     def load_tasks(self, json_profile):
 
         # active task 확인
-         active_tasks_name = json_profile['commons']['active_tasks']
+        active_tasks_name = json_profile['commons']['active_tasks']
 
-         active_tasks = json_profile[active_tasks_name]
+        active_tasks = json_profile[active_tasks_name]
 
         # get task params
-         for name, json_task in active_tasks.items():
+        for name, json_task in active_tasks.items():
+
+            actor = get_json_value(json_task, 'actor', 'None')
 
             str_task_type = get_json_value(json_task, 'type', '')
 
@@ -85,14 +88,16 @@ class TaskManager():
             params['instance_count'] = instance_count
             params['q_in'] = q_in
             params['q_out'] = q_out
+            params['actor'] = actor
 
             # params
-            for k,v in json_task['params'].items():
+            for k, v in json_task['params'].items():
                 params[k] = v
 
             _class = self.load_class(str_task_type)
 
             task = _class(params)
+
             self.add_task(task)
 
     # load task
@@ -101,7 +106,7 @@ class TaskManager():
         # instance type
         p = str_type_path.rfind('.')
         module_path = str_type_path[0:p]
-        type_name = str_type_path[p+1:]
+        type_name = str_type_path[p + 1:]
 
         _type = None
 
@@ -121,6 +126,8 @@ class TaskManager():
 
     # multi processing(append)
     def add_task(self, task):
+
+        ## param
         self.tasks[task.actor] = task
         pass
 

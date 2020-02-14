@@ -33,13 +33,15 @@ class TaskManager():
         # -------------------------------------
         # TASK READY 상태
 
-        # queue 준비
-        for name, queue in self.queues.items():
-            queue.start()
-
         # task 준비
+
         for name, task in self.tasks.items():
             task.start()
+
+        # queue 준비
+
+        for name, queue in self.queues.items():
+            queue.start()
 
         # -------------------------------------
         # TASK 종료 대기
@@ -48,7 +50,9 @@ class TaskManager():
             task.join()
 
     def load_queues(self, json_profile):
+
         for k, json_queue in json_profile['queues'].items():
+
             q = TaskQueue({
                 'name': k,
                 'stop_order': json_queue['stop_order']

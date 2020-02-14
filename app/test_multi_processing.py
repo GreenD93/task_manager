@@ -9,7 +9,6 @@ def creator(data, q):
     print('Creating data and putting it on the queue')
 
     for item in data:
-        time.sleep(1)
         q.put(item)
 
 
@@ -23,11 +22,52 @@ def my_consumer(q):
 
         if data is sentinel:
             break
+    pass
 
+class TaskQueue(object):
+
+    instance_count = 0
+
+    def __init__(self, params={}):
+        self.q = Queue()
+        TaskQueue.instance_count += 1
+
+        self.name = None
+        self.stop_order = 0
+
+
+        if self.name is None:
+            self.name = 'queue_{:0d}'.format(TaskQueue.instance_count)
+
+    def start(self):
+        print('TaskQueue.start')
+        self.q.close()
+        self.q.join_thread()
+
+
+    def stop(self):
+        self.q.close()
+        pass
+
+    def get(self):
+        return self.q.get()
+
+    def put(self, data):
+        return self.q.put(data)
+
+    def empty(self):
+        result = False
+
+        try:
+            result = self.q.empty()
+        except:
+            result = True
+
+        return result
 
 if __name__ == '__main__':
 
-    q = Queue()
+    q = TaskQueue()
     data = [5, 10, 13, -1]
 
     process_one = Process(target=creator, args=(data, q))
@@ -36,8 +76,7 @@ if __name__ == '__main__':
     process_one.start()
     process_two.start()
 
-    q.close()
-    q.join_thread()
+    q.start()
 
     process_one.join()
     process_two.join()

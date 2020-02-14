@@ -1,4 +1,5 @@
 from multiprocessing import Process
+import time
 
 from utils.util import *
 
@@ -47,6 +48,7 @@ class Task(Process):
     # -------------------------------------
     # put_output_data
     def put_output_data(self, data):
+
         if self.q_out is not None:
             self.q_out.put(data)
 
@@ -55,10 +57,8 @@ class Task(Process):
     # -------------------------------------
     # get_input_data
     def get_input_data(self):
-        result = None
 
-        q_in = self.q_in
-
-        result = q_in.get(False, 0.25)
+        if self.q_in is not None:
+            result = self.q_in.get()
 
         return result

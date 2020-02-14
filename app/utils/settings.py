@@ -6,6 +6,7 @@ CLOUD_SQL_PASSWD = 'wakdlsem'
 CLOUD_SQL_SCHEMA_NAME = 'vai_db'  # schema name
 CLOUD_SQL_CHARSET = 'utf8mb4'
 
+REVIEW_URL = 'http://stg.sat.wemakeprice.com/review/attach/'
 
 # crawling param
 LABEL = {
