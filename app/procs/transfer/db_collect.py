@@ -30,7 +30,7 @@ class DBCollector():
                 db.commit()
 
                 has_next = True
-                start_pos = 20
+                start_pos = 30
 
                 while has_next:
 

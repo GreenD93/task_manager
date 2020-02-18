@@ -23,13 +23,15 @@ class TaskImgLoader(Task):
         pass
 
     def run_self(self):
+
+        count = 0
         items = []
-        while len(items) < 10:
+
+        while len(items) < 20:
             data = self.get_input_data()
-            image_url = data['image_url']
+            if data is not None:
+                self.loader.load_imgs(items)
+                items.append(data)
+                count += 1
 
-            self.loader.get_urls(image_url)
-
-            items.append(data)
-
-
+            self.q_out.put(items)

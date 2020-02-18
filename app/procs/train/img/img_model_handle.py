@@ -5,13 +5,13 @@ class ImageModelHandler():
 
     #---------------------------------------------
     # constructor
-    def __init__(self):
-        pass
+    def __init__(self, name='bg_err'):
+        self.name = name
 
     def train(self):
         pass
 
-    def predict(self):
+    def predict(self, items):
         pass
 
     def evaluate(self):

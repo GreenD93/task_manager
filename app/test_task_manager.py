@@ -96,6 +96,7 @@ class TaskManager():
 
             _class = self.load_class(str_task_type)
 
+            print(params)
             task = _class(params)
 
             self.add_task(task)
