@@ -19,35 +19,54 @@ class TaskManager():
 
         self.type_table = {}
 
+        self.container_idx = 0
+
+        self.current_tasks_name = ''
         pass
 
+    def select_next_container(self):
+        self.container_idx += 1
+
     def load_tasks_from_profile(self, file_path):
-        json_profile = file_to_json(file_path)
 
-        # load queues
-        self.load_queues(json_profile)
+        #TODO : while문으로 바꾸기
+        for i in range(0,10):
+            json_profile = file_to_json(file_path)
 
-        # load tasks
-        self.load_tasks(json_profile)
+            # load queues
+            self.load_queues(json_profile)
 
-        # -------------------------------------
-        # TASK READY 상태
+            # load tasks
+            self.load_tasks(json_profile)
 
-        # task 준비
+            # -------------------------------------
+            # TASK READY 상태
 
-        for name, task in self.tasks.items():
-            task.start()
+            # task 준비
 
-        # queue 준비
+            for name, task in self.tasks.items():
+                task.start()
 
-        for name, queue in self.queues.items():
-            queue.start()
+            # queue 준비
 
-        # -------------------------------------
-        # TASK 종료 대기
+            for name, queue in self.queues.items():
+                queue.start()
 
-        for name, task in self.tasks.items():
-            task.join()
+            # -------------------------------------
+            # TASK 종료 대기
+
+            for name, task in self.tasks.items():
+                task.join()
+
+            # 상태변수 클리어
+            self.tasks.clear()
+            self.queues.clear()
+            self.arr_queues[:] = []
+
+            # 반복문으로 계속 되는 부분
+            # 다음 container로 넘어가기
+            self.select_next_container()
+
 
     def load_queues(self, json_profile):
 
@@ -67,7 +86,27 @@ class TaskManager():
         # active task 확인
         active_tasks_name = json_profile['commons']['active_tasks']
 
-        active_tasks = json_profile[active_tasks_name]
+        #------------------------------------------------------
+        # 현재 turn에서 스케줄된 테스크 찾기
+        active_tasks = None
+
+        if 'schedule' in json_profile['commons']:
+            schedule = json_profile['commons']['schedule']
+
+            if schedule['enabled']:
+
+                for tasks in schedule['tasks']:
+                    tasks_name = tasks[0]
+                    tasks_width = tasks[1]
+                    tasks_idx = tasks[2]
+                    tasks_enabled = tasks[3]
+
+                    if tasks_enabled and ((self.container_idx % tasks_width) == tasks_idx):
+                        active_tasks = json_profile[tasks_name]
+                        self.current_tasks_name = tasks_name
+                        break
+
+        # active_tasks = json_profile[active_tasks_name]
 
         # get task params
         for name, json_task in active_tasks.items():
@@ -141,7 +180,6 @@ class TaskManager():
             return self.queues[name]
         else:
             return None
-
 
 file_path = './profiles/task_profile.json'
 file_to_json(file_path)

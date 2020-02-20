@@ -18,7 +18,6 @@ class TaskModelPredictor(Task):
     # -------------------------------------
     # init_self
     def init_self(self):
-        print(self.model_name)
         self.predictor = ImageBatchPredictor(self.model_name)
         pass
 
