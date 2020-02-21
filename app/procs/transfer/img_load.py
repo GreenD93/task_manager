@@ -20,20 +20,19 @@ class ImageLoader():
     def __init__(self):
         pass
 
-    def load_imgs(self, items):
-        for item in items:
-            np_img = self._fetch(item)
-            item['img'] = np_img
-
+    def load_img(self, item):
+        np_img = self._fetch(item)
+        item['img'] = np_img
+        
         # ------------------------------------------
         # 신규이미지 읽어오기 (async)
         # if len(items) > 0:
         #     asyncio.run(self._load_imgs_async(items)
 
     # async def _load_imgs_async(self, items):
-    #
-    #     #--------------------------
-        # fetch
+
+    # --------------------------
+    # fetch
     def _fetch(sess, item):
         img_url = item['image_url']
 
@@ -47,5 +46,3 @@ class ImageLoader():
         np_img = np.array(im, dtype=np.uint8)
 
         return np_img
-
-

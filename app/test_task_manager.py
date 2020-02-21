@@ -1,6 +1,8 @@
 import json
 import importlib
 
+from pprint import pprint
+
 from utils.settings import *
 from utils.db_utils import *
 from utils.util import *
@@ -21,6 +23,7 @@ class TaskManager():
 
         self.container_idx = 0
 
+        self.active_tasks_name = ''
         self.current_tasks_name = ''
         pass
 
@@ -30,42 +33,41 @@ class TaskManager():
     def load_tasks_from_profile(self, file_path):
 
         #TODO : while문으로 바꾸기
-        for i in range(0,10):
-            json_profile = file_to_json(file_path)
+        json_profile = file_to_json(file_path)
 
-            # load queues
-            self.load_queues(json_profile)
+        # load queues
+        self.load_queues(json_profile)
 
-            # load tasks
-            self.load_tasks(json_profile)
+        # load tasks
+        self.load_tasks(json_profile)
 
-            # -------------------------------------
-            # TASK READY 상태
+        # -------------------------------------
+        # TASK READY 상태
 
-            # task 준비
+        # task 준비
 
-            for name, task in self.tasks.items():
-                task.start()
+        for name, task in self.tasks.items():
+            task.start()
 
-            # queue 준비
+        # queue 준비
 
-            for name, queue in self.queues.items():
-                queue.start()
+        for name, queue in self.queues.items():
+            queue.start()
 
-            # -------------------------------------
-            # TASK 종료 대기
+        # -------------------------------------
+        # TASK 종료 대기
+        for name, task in self.tasks.items():
+            task.join()
 
-            for name, task in self.tasks.items():
-                task.join()
+        # 상태변수 클리어
+        # self.tasks.clear()
+        # self.queues.clear()
+        # self.arr_queues[:] = []
 
-            # 상태변수 클리어
-            self.tasks.clear()
-            self.queues.clear()
-            self.arr_queues[:] = []
 
-            # 반복문으로 계속 되는 부분
-            # 다음 container로 넘어가기
-            self.select_next_container()
+        # 반복문으로 계속 되는 부분
+        # 다음 container로 넘어가기
+        # self.select_next_container()
 
 
     def load_queues(self, json_profile):
@@ -83,8 +85,8 @@ class TaskManager():
 
     def load_tasks(self, json_profile):
 
-        # active task 확인
-        active_tasks_name = json_profile['commons']['active_tasks']
+        if self.active_tasks_name == '':
+            self.active_tasks_name = json_profile['commons']['active_tasks']
 
         #------------------------------------------------------
         # 현재 turn에서 스케줄된 테스크 찾기
@@ -94,19 +96,27 @@ class TaskManager():
             schedule = json_profile['commons']['schedule']
 
             if schedule['enabled']:
-
                 for tasks in schedule['tasks']:
                     tasks_name = tasks[0]
                     tasks_width = tasks[1]
                     tasks_idx = tasks[2]
                     tasks_enabled = tasks[3]
 
+                    # tasks 순서 정하는 mechanism
                     if tasks_enabled and ((self.container_idx % tasks_width) == tasks_idx):
                         active_tasks = json_profile[tasks_name]
                         self.current_tasks_name = tasks_name
                         break
 
-        # active_tasks = json_profile[active_tasks_name]
+        #------------------------------------------------------
+        # 만약 현재 turn에서 스케줄된 테스크가 없으면, active_tasks_name을 이용하기
+        if active_tasks is None:
+            active_tasks = json_profile[self.active_tasks_name]
+            self.current_tasks_name = self.active_tasks_name
+
+
+
+        pprint(active_tasks)
 
         # get task params
         for name, json_task in active_tasks.items():
@@ -135,7 +145,6 @@ class TaskManager():
 
             _class = self.load_class(str_task_type)
 
-            print(params)
             task = _class(params)
 
             self.add_task(task)

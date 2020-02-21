@@ -1,23 +1,21 @@
 {
   "commons": {
     "active_tasks": "tasks_process_all",
-
     "schedule": {
-      "enabled": true,
+      "enabled": false,
       "tasks": [
-        ["tasks_ml_tr_img_class", 2, 0, true],
-        ["tasks_process_all", 2, 1, true]
+          ["tasks_ml_tr_cat", 2, 0, true],
+          ["tasks_process_all", 2, 1, true]
       ]
     }
   },
 
   "queues": {
-    "q0": { "stop_order": 0 },
-    "q1": { "stop_order": 1 }
+    "q0": {"stop_order": 0},
+    "q1": {"stop_order": 1}
   },
 
   "tasks_process_all": {
-
     "tx_01_CD": {
       "actor": "DBCollector",
       "comment": "# collect data from db ................................",
@@ -27,7 +25,6 @@
       "q_in": "",
       "q_out": "q0",
       "loop": true,
-
       "params": {
         "host": "127.0.0.1",
         "user": "vai",
@@ -36,7 +33,6 @@
         "table": "test"
       }
     },
-
     "tx_02_LI": {
       "actor": "ImageLoader",
       "comment": "# 이미지 로딩 ................................",
@@ -46,12 +42,9 @@
       "q_in": "q0",
       "q_out": "q1",
       "loop": true,
-
       "params": {
-
       }
     },
-
     "tx_03_CS": {
       "actor": "ImageChecker",
       "comment": "# 이미지 체크 ................................",
@@ -61,24 +54,6 @@
       "q_in": "q1",
       "q_out": "",
       "loop": true,
-
-      "params": {
-        "item_type": "image",
-        "model_name": "cat_model"
-      }
-    }
-  },
-
-  "tasks_ml_tr_img_class" : {
-    "img_IC_TR": {
-      "comment": "# 학습 Image classification ................................",
-      "enabled": true,
-      "type": "tasks.train.task_model_predict.TaskModelPredictor",
-      "instance_count": 1,
-      "q_in": "",
-      "q_out": "",
-      "loop": false,
-
       "params": {
         "item_type": "image",
         "model_name": "cat_model"
@@ -86,4 +61,3 @@
     }
   }
 }
-

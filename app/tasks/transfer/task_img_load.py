@@ -27,11 +27,17 @@ class TaskImgLoader(Task):
         count = 0
         items = []
 
-        while len(items) < 20:
+        while count < 9:
+
             data = self.get_input_data()
             if data is not None:
-                self.loader.load_imgs(items)
-                items.append(data)
+                print('load', data)
+                self.put_output_data(data)
                 count += 1
 
-            self.q_out.put(items)
+                # # item = self.loader.load_img(data)
+                # items.append(item)
+
+        # 특정 개수 까지 모았다가 한번에 queue에 집어넣기
+        # for item in items:
+        #     self.put_output_data(item)

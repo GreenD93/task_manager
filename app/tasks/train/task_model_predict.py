@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from tasks.task import Task
 
 from utils.util import *
@@ -18,18 +20,15 @@ class TaskModelPredictor(Task):
     # -------------------------------------
     # init_self
     def init_self(self):
-        self.predictor = ImageBatchPredictor(self.model_name)
+        # self.predictor = ImageBatchPredictor(self.model_name)
         pass
 
     def run_self(self):
 
         count = 0
-        items = []
-
-        while len(items) < 20:
+        while count < 9:
             data = self.get_input_data()
             if data is not None:
-                self.predictor.batch_check_items(data)
-                items.append(data)
+                print('predict', data)
                 count += 1
         pass

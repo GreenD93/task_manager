@@ -48,7 +48,6 @@ class Task(Process):
     # -------------------------------------
     # put_output_data
     def put_output_data(self, data):
-
         if self.q_out is not None:
             self.q_out.put(data)
 

@@ -1,7 +1,13 @@
-from utils.util import *
-from utils.db_utils import *
-from utils.settings import *
+import sys
+import os
 
+import time
+
+from utils.util import *
+from utils.settings import *
+from utils.db_utils import *
+
+import urllib.request
 
 class DBCollector():
 
@@ -30,7 +36,7 @@ class DBCollector():
                 db.commit()
 
                 has_next = True
-                start_pos = 10
+                start_pos = sys.maxsize
 
                 while has_next:
 
@@ -47,7 +53,6 @@ class DBCollector():
 
                         WHERE
                             t.seq < {1}
-
                         ORDER BY
                             t.seq DESC
 
@@ -69,6 +74,7 @@ class DBCollector():
 
                     for row in rows:
                         item_count_in_page += 1
+
                         seq = row[0]
                         review_id = row[1]
                         image_url = row[2]
@@ -92,3 +98,36 @@ class DBCollector():
         finally:
             if db is not None:
                 db.close()
+
+
+
+
+
+collector =  DBCollector(
+            host="127.0.0.1",
+            user="vai",
+            passwd="wakdlsem",
+            schema="vai_db",
+            table="test",
+            rows_per_page=100
+        )
+
+
+count = 0
+
+for item in collector.get_items():
+    img_name = item['image_url'].split('/')[1] + '.jpg'
+    save_path = os.path.join('res/train_img',item['label'],img_name)
+
+    download_url = REVIEW_URL + item['image_url']
+
+    urllib.request.urlretrieve(download_url, save_path)
+    count += 1
+
+    if (count % 100) == 0:
+        time.sleep(10)
+
+
+
+
+

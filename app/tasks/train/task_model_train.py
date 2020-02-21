@@ -5,6 +5,8 @@ from tasks.task import Task
 from utils.util import *
 from utils.settings import *
 
+from procs.train.train_settings import *
+
 from procs.train.img.img_model_handle import ImageModelHandler
 
 #---------------------------------------------------
@@ -19,6 +21,9 @@ class TaskModelTrainer(Task):
 
         self.item_type = get_json_value(params, 'item_type', 'image')
         self.model_name = get_json_value(params, 'model_name', 'mo_model')
+        self.n_class = get_json_value(params, 'n_class', 3)
+        self.max_epoch_count = get_json_value(params, 'max_epoch_count', MAX_EPOCH_COUNT)
+
         self.model = None
 
     #-------------------------------------
@@ -29,9 +34,8 @@ class TaskModelTrainer(Task):
         if self.item_type == 'image':
             self.model = ImageModelHandler(
                             name=self.model_name,
-                            max_sample_count=self.max_sample_count,
-                            batch_size=self.batch_size,
-                            max_epoch_count=self.max_epoch_count,
+                            n_class=self.n_class,
+                            max_epoch_count=self.max_epoch_count
                         )
 
     # -------------------------------------
