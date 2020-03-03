@@ -46,7 +46,6 @@ class TaskDBCollecter(Task):
     def run_self(self):
         for item in self.collector.get_items():
             self.put_output_data(item)
-            print('collect',item)
 
     def done_self(self):
         pass

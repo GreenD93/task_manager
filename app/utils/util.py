@@ -1,7 +1,11 @@
 import json
 import os
 import logging
+
+import pytz
+
 from pprint import pprint
+from datetime import datetime
 
 def log_info(s):
     s = replace_log_tag(s)
@@ -60,6 +64,9 @@ def json_to_str(json_obj, pretty=False):
 def str_to_json(s):
     return json.loads(s)
 
+def get_filename(file_path):
+    return os.path.basename(file_path)
+
 #---------------------------------------------
 RESET_SEQ   = "\033[0m"
 BOLD_SEQ    = "\033[1m"
@@ -78,3 +85,20 @@ def replace_log_tag(s):
     s = s.replace('$MAGENTA', MAGENTA_SEQ)
     s = s.replace('$CYAN', CYAN_SEQ)
     return s
+
+
+##########################################
+# time utilities
+
+TIME_ZONE = None
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+def _get_timezone():
+    global TIME_ZONE
+
+    if TIME_ZONE is None:
+        TIME_ZONE = pytz.timezone('Asia/Seoul')
+    return TIME_ZONE
+
+def get_current_time_string(format_string=TIME_FORMAT):
+    return datetime.now(_get_timezone()).strftime(format_string)

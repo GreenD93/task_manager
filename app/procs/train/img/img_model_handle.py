@@ -1,5 +1,7 @@
 # coding: utf-8
 
+from pprint import pprint
+
 import os
 import time
 import warnings
@@ -90,20 +92,6 @@ class ImageModelHandler():
 
     #---------------------------------------------
     # predict
-    # def predict(self, np_imgs):
-    #
-    #     if self.model is not None:
-    #
-    #         resized_imgs = self._resize_and_float_imgs(np_imgs)
-    #         # log_info(resized_imgs.shape)
-    #         # log_info(resized_imgs[0][0,0])
-    #
-    #         return self.model.predict(np_imgs)
-    #
-    #     else:
-    #         return np.array([])
-
-
     def predict(self, arr_imgs):
 
         # 모델이 없거나, 학습이 안되어 있으면 -> False를 리턴 (에러아님으로 판단)
@@ -124,8 +112,6 @@ class ImageModelHandler():
     # _resize_and_float_imgs
     def _resize_and_float_imgs(self, arr_imgs):
 
-        # data_type = np_imgs.dtype
-        # count = np_imgs.shape[0]
         count = len(arr_imgs)
 
         resized_imgs = []
@@ -138,9 +124,6 @@ class ImageModelHandler():
             # resize image
             h, w = np_img.shape[:2]
             max_w = max(w, h)
-
-            # resized_img = np.zeros((h, w, 3), np.uint8)
-            # resized_img[:h,:w] = np_img[:h,:w]
 
             resized_img = np.zeros((max_w, max_w, 3), np.uint8)
             resized_img[:h,:w] = np_img[:h,:w]
@@ -172,8 +155,6 @@ class ImageModelHandler():
 
             self.model.compile(loss='sparse_categorical_crossentropy',
                           optimizer='sgd',
-                          # optimizer='rmsprop',
-                          # optimizer='adam',
                           metrics=['accuracy'])
 
             self.model.summary()
@@ -202,44 +183,13 @@ class ImageModelHandler():
                 Dense(self.n_class, activation='softmax')
             ])
 
-            # model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-
             model.compile(loss='sparse_categorical_crossentropy',
                           optimizer='sgd',
-                          # optimizer='rmsprop',
-                          # optimizer='adam',
-
-                        metrics=['accuracy'])
-
-            model.summary()
-
-            log_info('>> create model.')
-
-
-        else:
-            input_shape = (self.img_width, self.img_width, 3)
-            model = Sequential([
-                Conv2D(16, kernel_size=(3,3), padding='same', activation='relu', input_shape = input_shape),
-                MaxPooling2D(pool_size=(2,2)),
-                Conv2D(16, kernel_size=(3,3), padding='same', activation='relu'),
-                MaxPooling2D(pool_size=(2,2)),
-                Conv2D(16, kernel_size=(3,3), padding='same', activation='relu'),
-                MaxPooling2D(pool_size=(2,2)),
-                Flatten(),
-                Dense(512, activation='relu'),
-                Dropout(0.25),
-                Dense(self.n_class, activation='softmax')
-            ])
-
-            model.compile(loss='sparse_categorical_crossentropy',
-                          optimizer='sgd',
-                          # optimizer='rmsprop',
-                          # optimizer='adam',
                           metrics=['accuracy'])
 
             model.summary()
 
-            log_info('>> create model.')
+            pprint('>> create model.')
 
 
         self.model = model
@@ -338,7 +288,7 @@ class ImageModelHandler():
     #---------------------------------------------
     # _train_model
     def _train_model(self):
-        log_info('>> _train_model')
+        pprint('>> _train_model')
 
         # image generator . flow_from_dataframe 다음을 참조할것
         # https://taeguu.tistory.com/27
@@ -362,7 +312,7 @@ class ImageModelHandler():
 
                 # 만약 best의 값을 현재 샘플에 맞게 현실화...
                 if json_prev_best['val_loss'] < loss and json_prev_best['val_acc'] > acc:
-                    log_note('>> use UPDATED best')
+                    pprint('>> use UPDATED best')
                     json_prev_best['val_loss'] = loss + loss * 0.1
                     json_prev_best['val_acc'] = acc - acc * 0.1
                     json_prev_best['loss'] = loss + loss * 0.1
@@ -370,12 +320,12 @@ class ImageModelHandler():
 
                 # 만약 evaluate값이 best보다 좋으면, best를 그대로 쓰기
                 else:
-                    log_note('>> use OLD best')
+                    pprint('>> use OLD best')
 
                 return json_prev_best
 
             # 그외의 경우라면, best를 초기화한다
-            log_note('>> use NEW best')
+            pprint('>> use NEW best')
             json_prev_best = {
                 '_processed_time': get_current_time_string(),
                 'epoch': 0,
@@ -412,19 +362,19 @@ class ImageModelHandler():
         train_steps = train_count // self.batch_size
         validation_steps = val_count // self.batch_size
 
-        log_info('>> train_count: {}'.format(train_count))
-        log_info('>> val_count: {}'.format(val_count))
-        log_info('>> train_steps: {}'.format(train_steps))
-        log_info('>> validation_steps: {}'.format(validation_steps))
-        log_info('>> real_category_row_count: {}'.format(real_row_count_dict))
+        pprint('>> train_count: {}'.format(train_count))
+        pprint('>> val_count: {}'.format(val_count))
+        pprint('>> train_steps: {}'.format(train_steps))
+        pprint('>> validation_steps: {}'.format(validation_steps))
+        pprint('>> real_category_row_count: {}'.format(real_row_count_dict))
 
-        history = self.model.fit_generator(
+        history = self.model.fit(
             train_data_generator,
             steps_per_epoch = train_steps,
             epochs=self.max_epoch_count,
             validation_data=val_data_generator,
             validation_steps=validation_steps,
-            verbose=2,
+            verbose=1,
             callbacks=[
                 LossAndErrorPrintingCallback(name=self.name),
                 EarlyStoppingAtMinValLoss(
@@ -436,85 +386,19 @@ class ImageModelHandler():
         )
 
 
-        #-------------------------------------------
-        # test
-        sample_val_images, sample_val_ys = next(val_data_generator)
-
-        log_info('{}'.format(sample_val_images.shape))
-        log_info('{}'.format(sample_val_ys.shape))
-
-
-        res = self.model.predict(sample_val_images)
+        # #-------------------------------------------
+        # # test
+        # sample_val_images, sample_val_ys = next(val_data_generator)
+        #
+        # pprint('{}'.format(sample_val_images.shape))
+        # pprint('{}'.format(sample_val_ys.shape))
+        #
+        #
+        # res = self.model.predict(sample_val_images)
         # log_info(res)
         # log_info(sample_val_ys)
 
-        for i in range(sample_val_ys.shape[0]):
-            log_info('{} : {}'.format(sample_val_ys[i], res[i]))
-
-
         pass
-
-
-
-    #---------------------------------------------
-    # test_predict_samples
-    def test_predict_samples(self):
-
-        dataset_generator = DatasetGenerator(
-            max_sample_count=self.max_sample_count,
-            batch_size=self.batch_size,
-            img_width=self.img_width)
-
-        val_data_generator, _, _, _ = dataset_generator.get_data_generators(trainable=False)
-
-        all_count = 0
-        match_count = 0
-
-        all_t = 0
-
-        for _ in range(10):
-            x_imgs, y_vals = val_data_generator.next()
-
-            # log_info(x_imgs.shape)
-            # log_info(x_imgs.dtype)
-            # log_info(x_imgs[0,0])
-            # log_info(y_vals)
-
-            x_imgs = x_imgs * 255
-            x_imgs = x_imgs.astype(np.uint8)
-
-            bt = time.time()
-
-            # predictions = self.predict(x_imgs)
-
-            arr_imgs = []
-            for i in range(x_imgs.shape[0]):
-                arr_imgs.append(x_imgs[i])
-
-            predictions = self.predict(arr_imgs)
-
-            dt = time.time() - bt
-            all_t += dt
-
-            # log_info(predictions)
-
-            for i in range(predictions.shape[0]):
-                all_count += 1
-
-                r = predircions[i]
-
-                # log_info('{} : {}'.format(y_vals[i], r))
-                # predictions[i]: int, y_vals[i]: 'float'
-                # 연산은 관계없으나 int로 비교하기
-                if r == int(y_vals[i]):
-                    match_count += 1
-
-        print('dt: {}'.format(all_t))
-        print('{} / {} = {}'.format(match_count, all_count, float(match_count)/all_count))
-
-        pass
-
-
 
     #---------------------------------------------
     # evaluate
@@ -527,9 +411,8 @@ class ImageModelHandler():
 
         eval_data_generator, _, _, _ = dataset_generator.get_data_generators(trainable=False)
 
-        #loss, acc = self.model.evaluate_generator(eval_data_generator, steps=100*self.batch_size)
         loss, acc = self.model.evaluate_generator(eval_data_generator, steps=50*self.batch_size)
 
-        log_note('>> EVALUATED: loss[{:.4f}], acc[{:.4f}]'.format(loss, acc))
+        pprint('>> EVALUATED: loss[{:.4f}], acc[{:.4f}]'.format(loss, acc))
 
         return float(loss), float(acc)

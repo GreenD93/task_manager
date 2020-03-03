@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import numpy as np
+from pprint import pprint
 
 from tensorflow.keras.callbacks import Callback, EarlyStopping
 
@@ -25,9 +26,9 @@ class LossAndErrorPrintingCallback(Callback):
     def on_train_batch_end(self, batch, logs=None):
         # print('\rbatch:{}, loss:{:.2f}'.format(batch, logs['loss']), end='')
         if batch % 4 == 0:
-            log_info(
+            pprint(
                 '[{}][TRAIN] epoch:{}, batch:{}, loss:{:.4f}, acc:{:.4f}'.format(
-                    self.name, self.epoch_count, batch, logs['loss'], logs['acc']
+                    self.name, self.epoch_count, batch, logs['loss'], logs['accuracy']
                 )
             )
         pass
@@ -37,9 +38,9 @@ class LossAndErrorPrintingCallback(Callback):
     def on_test_batch_end(self, batch, logs=None):
         # print('\rbatch:{}, loss:{:.2f}'.format(batch, logs['loss']), end='')
         if batch % 4 == 0:
-            log_info(
+            pprint(
                 '[{}][TEST] epoch:{}, batch:{}, loss:{:.4f}, acc:{:.4f}'.format(
-                    self.name, self.epoch_count, batch, logs['loss'], logs['acc']
+                    self.name, self.epoch_count, batch, logs['loss'], logs['accuracy']
                 )
             )
         pass
@@ -72,11 +73,11 @@ class EarlyStoppingAtMinValLoss(Callback):
         self.epoch_count = 1
 
         if self.best_weights is not None:
-            log_note('loaded pretrained weight')
+            pprint('loaded pretrained weight')
         else:
-            log_note('not loaded pretrained weight')
+            pprint('not loaded pretrained weight')
 
-        log_note('\n'+json_to_str(self.best, pretty=True))
+        pprint('\n'+json_to_str(self.best, pretty=True))
 
         pass
 
@@ -90,8 +91,8 @@ class EarlyStoppingAtMinValLoss(Callback):
         # The epoch the training stops at.
         self.stopped_epoch = 0
 
-        log_info('>> prev best val_loss: {:.4f}'.format(self.best['val_loss']))
-        log_info('>> prev best weights: {}'.format(type(self.best_weights)))
+        pprint('>> prev best val_loss: {:.4f}'.format(self.best['val_loss']))
+        pprint('>> prev best weights: {}'.format(type(self.best_weights)))
 
         pass
 
@@ -100,10 +101,10 @@ class EarlyStoppingAtMinValLoss(Callback):
     # on_epoch_end
     def on_epoch_end(self, epoch, logs=None):
 
-        log_info('--------------------------------------------------------')
-        log_info('>>> model: [{}]'.format(self.model_handler.name))
+        pprint('--------------------------------------------------------')
+        pprint('>>> model: [{}]'.format(self.model_handler.name))
 
-        log_info('>>>[{}] best: epoch[{}], loss[{:.4f}], acc[{:.4f}], val_loss[{:.4f}], val_acc[{:.4f}]'.format(
+        pprint('>>>[{}] best: epoch[{}], loss[{:.4f}], acc[{:.4f}], val_loss[{:.4f}], val_acc[{:.4f}]'.format(
             self.model_handler.name,
             self.best['epoch'],
             self.best['loss'],
@@ -111,30 +112,30 @@ class EarlyStoppingAtMinValLoss(Callback):
             self.best['val_loss'],
             self.best['val_acc']))
 
-        log_info('>>>[{}] curr: epoch[{}], loss[{:.4f}], acc[{:.4f}], val_loss[{:.4f}], val_acc[{:.4f}]'.format(
+        pprint('>>>[{}] curr: epoch[{}], loss[{:.4f}], acc[{:.4f}], val_loss[{:.4f}], val_acc[{:.4f}]'.format(
             self.model_handler.name,
             self.epoch_count,
             logs['loss'],
-            logs['acc'],
+            logs['accuracy'],
             logs['val_loss'],
-            logs['val_acc']))
+            logs['val_accuracy']))
 
         #------------------------------
         # 만약 현재가 best보다 좋다면
 
         # 만약 val_loss, val_acc, loss, acc 모두 최소일때
         if False:
-            is_best = ((self.best['acc'] < logs['acc']) and
-                (self.best['val_acc'] < logs['val_acc']) and
+            is_best = ((self.best['acc'] < logs['accuracy']) and
+                (self.best['val_acc'] < logs['val_accuracy']) and
                 (self.best['loss'] > logs['loss']) and
                 (self.best['val_loss'] > logs['val_loss']))
 
         # 만약 val_loss + abs(val_acc - acc)가 최소일때
         elif False:
             old_v = self.best['val_loss'] + np.abs(self.best['val_acc'] - self.best['acc'])
-            new_v = logs['val_loss'] + np.abs(logs['val_acc'] - logs['acc'])
+            new_v = logs['val_loss'] + np.abs(logs['val_accuracy'] - logs['accuracy'])
             is_best = (old_v > new_v)
-            log_info('>>> old:{:.4f}, new:{:.4f}'.format(old_v, new_v))
+            pprint('>>> old:{:.4f}, new:{:.4f}'.format(old_v, new_v))
 
         # 만약 val_loss가 최소일때
         else:
@@ -146,9 +147,9 @@ class EarlyStoppingAtMinValLoss(Callback):
 
             self.best = {
                 'epoch': epoch,
-                'acc': logs['acc'],
+                'acc': logs['accuracy'],
                 'loss': logs['loss'],
-                'val_acc': logs['val_acc'],
+                'val_acc': logs['val_accuracy'],
                 'val_loss': logs['val_loss'],
             }
 
@@ -168,7 +169,7 @@ class EarlyStoppingAtMinValLoss(Callback):
                 self.stopped_epoch = epoch
                 self.model.stop_training = True
 
-                log_info('Restore weights -> best epoch:{}, val_loss:{:.4f}'.format(
+                pprint('Restore weights -> best epoch:{}, val_loss:{:.4f}'.format(
                     self.best_epoch, self.best['val_loss']))
 
                 self.model.set_weights(self.best_weights)
@@ -182,9 +183,9 @@ class EarlyStoppingAtMinValLoss(Callback):
     #---------------------------------------
     # on_train_end
     def on_train_end(self, logs=None):
-        log_info('>> on_train_end')
+        pprint('>> on_train_end')
         if self.stopped_epoch > 0:
-            log_info('Epoch %05d: early stopping' % (self.stopped_epoch + 1))
+            pprint('Epoch %05d: early stopping' % (self.stopped_epoch + 1))
 
         # 그냥 epoch를 다 돌고 끝났다면, best로 세팅
         else:

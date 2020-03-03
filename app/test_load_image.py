@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 from PIL import Image
@@ -18,10 +20,26 @@ class ImageLoader():
   def __init__(self):
       pass
 
+
+  def temp_load_img(self, item):
+      print('url'*50)
+      # print(item['image_url'].split('/')[1]+'.jpg')
+      # img_path = os.path.join('res/train_imgs', item['category'])
+      # im_src = Image.open(img_path)
+      #
+      # im = im_src.convert('RGB')
+      #
+      # np_img = np.array(im, dtype=np.uint8)
+      # item['img'] = np_img
+      pass
+
+
   def load_img(self, item):
+
       np_img = self._fetch(item)
       item['img'] = np_img
 
+      pass
       # ------------------------------------------
       # 신규이미지 읽어오기 (async)
       # if len(items) > 0:

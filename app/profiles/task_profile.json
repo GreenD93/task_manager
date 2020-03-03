@@ -1,18 +1,21 @@
 {
   "commons": {
-    "active_tasks": "tasks_process_all",
+    "active_tasks": "",
     "schedule": {
-      "enabled": false,
+      "enabled": true,
       "tasks": [
-          ["tasks_ml_tr_cat", 2, 0, true],
-          ["tasks_process_all", 2, 1, true]
+
+        ["tasks_process_all", 2, 1, true],
+        ["tasks_ml_tr_cat", 2, 0, true]
+
       ]
     }
   },
 
   "queues": {
     "q0": {"stop_order": 0},
-    "q1": {"stop_order": 1}
+    "q1": {"stop_order": 1},
+    "q2": {"stop_order": 2}
   },
 
   "tasks_process_all": {
@@ -25,6 +28,7 @@
       "q_in": "",
       "q_out": "q0",
       "loop": true,
+
       "params": {
         "host": "127.0.0.1",
         "user": "vai",
@@ -33,6 +37,7 @@
         "table": "test"
       }
     },
+
     "tx_02_LI": {
       "actor": "ImageLoader",
       "comment": "# 이미지 로딩 ................................",
@@ -42,9 +47,11 @@
       "q_in": "q0",
       "q_out": "q1",
       "loop": true,
+
       "params": {
       }
     },
+
     "tx_03_CS": {
       "actor": "ImageChecker",
       "comment": "# 이미지 체크 ................................",
@@ -52,11 +59,48 @@
       "type": "tasks.train.task_model_predict.TaskModelPredictor",
       "instance_count": 1,
       "q_in": "q1",
-      "q_out": "",
+      "q_out": "q2",
       "loop": true,
+
       "params": {
         "item_type": "image",
         "model_name": "cat_model"
+      }
+    },
+
+    "tx_04_SD": {
+      "actor": "DataSavor",
+      "comment": "# 예측 결과값 저장 ................................",
+      "enabled": true,
+      "type": "tasks.save.task_img_status_save.TaskImageStatusSaver",
+      "instance_count": 1,
+      "q_in": "q2",
+      "q_out": "",
+      "loop": true,
+
+      "params": {
+        "host": "127.0.0.1",
+        "user": "vai",
+        "passwd": "wakdlsem",
+        "schema": "vai_db"
+      }
+    }
+  },
+
+  "tasks_ml_tr_cat": {
+    "tx_BG_TR": {
+      "comment": "# 이미지 class 분류 학습 ......................................................",
+      "enabled": true,
+      "type": "tasks.train.task_model_train.TaskModelTrainer",
+      "instance_count": 1,
+      "q_in": "",
+      "q_out": "",
+      "loop": false,
+
+      "params": {
+        "item_type": "image",
+        "model_name": "cat_model",
+        "n_class": 3
       }
     }
   }

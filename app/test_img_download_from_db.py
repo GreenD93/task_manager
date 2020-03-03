@@ -117,7 +117,7 @@ count = 0
 
 for item in collector.get_items():
     img_name = item['image_url'].split('/')[1] + '.jpg'
-    save_path = os.path.join('res/train_img',item['label'],img_name)
+    save_path = os.path.join('res/train_imgs', item['label'], img_name)
 
     download_url = REVIEW_URL + item['image_url']
 

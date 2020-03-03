@@ -51,6 +51,6 @@ class ImageBatchPredictor():
             for i in range(preds.shape[0]):
 
                 item = items[i]
-                item['category'] = preds[i]
+                item['pred'] = preds[i]
 
         return items

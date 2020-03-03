@@ -77,7 +77,7 @@ class DBCollector():
 
                         result = {
                             'seq': seq,
-                            'review_id': review_id,
+                            'reviewid': review_id,
                             'image_url': image_url,
                             'score': score,
                             'label': label

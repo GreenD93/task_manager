@@ -31,13 +31,11 @@ class TaskImgLoader(Task):
 
             data = self.get_input_data()
             if data is not None:
-                print('load', data)
-                self.put_output_data(data)
+                self.loader.temp_load_img(data)
+                items.append(data)
                 count += 1
 
-                # # item = self.loader.load_img(data)
-                # items.append(item)
 
         # 특정 개수 까지 모았다가 한번에 queue에 집어넣기
-        # for item in items:
-        #     self.put_output_data(item)
+        for item in items:
+            self.put_output_data(item)
