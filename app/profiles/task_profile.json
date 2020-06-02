@@ -1,8 +1,8 @@
 {
   "commons": {
-    "active_tasks": "",
+    "active_tasks": "tasks_process_all",
     "schedule": {
-      "enabled": true,
+      "enabled": false,
       "tasks": [
 
         ["tasks_process_all", 2, 1, true],

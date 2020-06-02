@@ -21,3 +21,5 @@ CATEGORIES_DICT = {
     'pet' : 1,
     'shoes' : 2
 }
+
+CLS_SCORE = 0.6
