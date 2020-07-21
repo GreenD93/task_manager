@@ -8,7 +8,6 @@ from utils.settings import *
 
 from procs.transfer.db_collect import DBCollector
 
-
 class TaskDBCollecter(Task):
     #---------------------------------------------
     # constructor
@@ -44,8 +43,14 @@ class TaskDBCollecter(Task):
         pass
 
     def run_self(self):
+
+        count = 0
         for item in self.collector.get_items():
-            self.put_output_data(item)
+            if count < 400:
+                self.put_output_data(item)
+                count += 1
+            else:
+                break
 
     def done_self(self):
         pass

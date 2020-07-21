@@ -2,6 +2,8 @@ from utils.util import *
 from utils.db_utils import *
 from utils.settings import *
 
+import sys
+
 
 class DBCollector():
 
@@ -30,9 +32,15 @@ class DBCollector():
                 db.commit()
 
                 has_next = True
-                start_pos = 10
+
+                last_seq = -1
 
                 while has_next:
+
+                    if last_seq == -1:
+                        last_seq = sys.maxsize
+
+                    str_seq_filter = 't.seq < {}'.format(last_seq)
 
                     sql = """
                         SELECT
@@ -44,9 +52,9 @@ class DBCollector():
 
                         FROM
                             {0} t
-
+                            
                         WHERE
-                            t.seq < {1}
+                            {1}
 
                         ORDER BY
                             t.seq DESC
@@ -55,21 +63,24 @@ class DBCollector():
                             {2};
                     """.format(
                         self.table,
-                        start_pos,
+                        str_seq_filter,
                         self.rows_per_page
                     )
 
                     curs.execute(sql)
-
                     rows = curs.fetchall()
 
                     item_count_in_page = len(rows)
-                    if item_count_in_page < 100 or item_count_in_page == 0:
+
+                    if item_count_in_page < 50 or item_count_in_page == 0:
                         has_next = False
 
                     for row in rows:
                         item_count_in_page += 1
+
                         seq = row[0]
+                        last_seq = seq
+
                         review_id = row[1]
                         image_url = row[2]
                         score = row[3]
@@ -82,7 +93,6 @@ class DBCollector():
                             'score': score,
                             'label': label
                         }
-                        start_pos = min(result['seq'], start_pos)
 
                         yield result
 

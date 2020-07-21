@@ -32,44 +32,43 @@ class TaskManager():
 
     def load_tasks_from_profile(self, file_path):
 
-        #TODO : while문으로 바꾸기
+        # TODO : while문으로 바꾸기
 
-        for i in range(0,2):
-            json_profile = file_to_json(file_path)
+        json_profile = file_to_json(file_path)
 
-            # load queues
-            self.load_queues(json_profile)
+        # load queues
+        self.load_queues(json_profile)
 
-            # load tasks
-            self.load_tasks(json_profile)
+        # load tasks
+        self.load_tasks(json_profile)
 
-            # -------------------------------------
-            # TASK READY 상태
+        # -------------------------------------
+        # TASK READY 상태
 
-            # task 준비
+        # task 준비
 
-            for name, task in self.tasks.items():
-                task.start()
+        for name, task in self.tasks.items():
+            task.start()
 
-            # queue 준비
+        # queue 준비
 
-            for name, queue in self.queues.items():
-                queue.start()
+        for name, queue in self.queues.items():
+            queue.start()
 
-            # -------------------------------------
-            # TASK 종료 대기
-            for name, task in self.tasks.items():
-                task.join()
+        # -------------------------------------
+        # TASK 종료 대기
+        for name, task in self.tasks.items():
+            task.join()
 
-            # 상태변수 클리어
-            self.tasks.clear()
-            self.queues.clear()
-            self.arr_queues[:] = []
+        # 상태변수 클리어
+        self.tasks.clear()
+        self.queues.clear()
+        self.arr_queues[:] = []
 
-            # 반복문으로 계속 되는 부분
-            # 다음 container로 넘어가기
+        # 반복문으로 계속 되는 부분
+        # 다음 container로 넘어가기
 
-            self.select_next_container()
+        self.select_next_container()
 
     def load_queues(self, json_profile):
 
@@ -114,8 +113,6 @@ class TaskManager():
         if active_tasks is None:
             active_tasks = json_profile[self.active_tasks_name]
             self.current_tasks_name = self.active_tasks_name
-
-
 
         pprint(active_tasks)
 

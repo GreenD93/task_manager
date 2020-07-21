@@ -64,14 +64,16 @@ class ImageStatusSaver():
         #------------------------------------------------------------
         try:
             for data in arr_data:
+
                 reviewid = int(data['reviewid'])
-                pred = int(data['pred'])
+                #pred = int(data['pred'])
+                pred = 1
 
                 sql = """
                     UPDATE
                         test
                     SET
-                        err1={0}
+                        pred={0}
                     WHERE
                         reviewid={1}
                     ;

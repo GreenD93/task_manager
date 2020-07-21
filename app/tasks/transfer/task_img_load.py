@@ -8,6 +8,8 @@ from utils.settings import *
 
 from procs.transfer.img_load import ImageLoader
 
+MAX_COLLECT_COUNT = 400
+
 class TaskImgLoader(Task):
     #---------------------------------------------
     # constructor
@@ -27,11 +29,12 @@ class TaskImgLoader(Task):
         count = 0
         items = []
 
-        while count < 9:
+        while count < MAX_COLLECT_COUNT:
 
             data = self.get_input_data()
+
             if data is not None:
-                self.loader.temp_load_img(data)
+                #self.loader.temp_load_img(data)
                 items.append(data)
                 count += 1
 

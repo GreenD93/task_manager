@@ -1,6 +1,6 @@
 # coding: utf-8
-
-from multiprocessing import Queue
+import multiprocessing
+from tasks.task_custom_queue import Queue
 
 from utils.util import *
 
@@ -21,6 +21,7 @@ class TaskQueue(object):
 
     def start(self):
         print('TaskQueue.start')
+        # 백그라운드로 큐가 돌게함
         self.q.close()
         self.q.join_thread()
 
@@ -36,6 +37,7 @@ class TaskQueue(object):
         return self.q.put(data, block, timeout)
 
     def empty(self):
+
         result = False
 
         try:
@@ -44,3 +46,6 @@ class TaskQueue(object):
             result = True
 
         return result
+
+    def qsize(self):
+        return self.q.qsize()
