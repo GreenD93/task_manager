@@ -10,7 +10,7 @@ class DBCollector():
     # -------------------------------------
     # constructor
     def __init__(self,
-                 host, user, passwd, schema, table, rows_per_page=100):
+                 host, user, passwd, schema, table, rows_per_page=50):
 
         self.host = host
         self.user = user
@@ -49,16 +49,16 @@ class DBCollector():
                             t.image_url,
                             t.score,
                             t.label
-
+    
                         FROM
                             {0} t
                             
                         WHERE
                             {1}
-
+    
                         ORDER BY
                             t.seq DESC
-
+    
                         LIMIT
                             {2};
                     """.format(

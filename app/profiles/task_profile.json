@@ -18,7 +18,7 @@
 
 
 
-  
+
   "queues": {
     "q0": {"stop_order": 0},
     "q1": {"stop_order": 1},
@@ -132,7 +132,7 @@
         "n_class": 3
       }
     }
-  },
+  }
 
 
 

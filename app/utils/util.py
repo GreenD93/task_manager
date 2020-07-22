@@ -86,6 +86,11 @@ def replace_log_tag(s):
     s = s.replace('$CYAN', CYAN_SEQ)
     return s
 
+#-------------------------------------
+# write_buf
+def write_buf(s, buf):
+    buf.write(s + '\n')
+    pass
 
 ##########################################
 # time utilities

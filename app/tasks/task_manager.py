@@ -1,7 +1,14 @@
+# coding: utf-8
 import json
 import importlib
+import time
+import enum
+from multiprocessing import Value
+
+from threading import Thread
 
 from pprint import pprint
+from io import StringIO
 
 from utils.settings import *
 from utils.db_utils import *
@@ -9,8 +16,35 @@ from utils.util import *
 
 from tasks.task_queue import TaskQueue
 
+class Status(enum.Enum):
+    INIT                    = 0
+    LOADING                 = 1
+    LOADED                  = 2
+    READY                   = 3
+    RUNNING                 = 4
+    STOPPING                = 5
+    STOPPED                 = 6
+    FORCE_STOP_OR_PAUSE      = 99
+
+# watchdog을 매번 부를 시간간격
+WATCHDOG_INTERVAL = 10
+
+# 종료조건시에 각 진행마다 슬립시간
+WATCHDOG_SLEEP_ON_STOPPING = 5
 
 class TaskManager():
+
+    ##########################################
+    # singleton
+
+    g_instance = None
+
+    @staticmethod
+    def get_instance():
+        if TaskManager.g_instance is None:
+            TaskManager.g_instance = TaskManager()
+
+        return TaskManager.g_instance
 
     # ---------------------------------------------
     # constructor
@@ -21,57 +55,135 @@ class TaskManager():
 
         self.type_table = {}
 
+        self.tasks_status = Status.INIT
+
         self.container_idx = 0
 
         self.active_tasks_name = ''
         self.current_tasks_name = ''
+
+        self.counters = dict()
+
+        self.start_time = 0
+        self.load_time = 0
+
+        self.total_processed = 0
+
         pass
 
+    #----------------------------------------------
+    # select_next_container
     def select_next_container(self):
         self.container_idx += 1
 
+    #----------------------------------------------
+    # load_services
+    def load_services(self, file_path):
+        print('TaskManager.load')
+        self.load_tasks_from_profile(file_path)
+        pass
+
+    #----------------------------------------------
+    # pause_services
+    def pause_services(self):
+
+        print('TaskManager.pausing...')
+        self.tasks_status = Status.FORCE_STOP_OR_PAUSE
+        pass
+
+    #----------------------------------------------
+    # stop_services
+    def stop_services(self):
+
+        print('TaskManager.stopping...')
+        self.tasks_status = Status.FORCE_STOP_OR_PAUSE
+
+        #-------------------------------------
+        # 일시멈춤
+        self.pause_services()
+
+        pass
+
+    #----------------------------------------------
+    # load_tasks_from_profile
     def load_tasks_from_profile(self, file_path):
 
-        #TODO : while문으로 바꾸기
+        self.load_time = time.time()
 
-        for i in range(0,2):
-
-            json_profile = file_to_json(file_path)
-
-            # load queues
-            self.load_queues(json_profile)
-
-            # load tasks
-            self.load_tasks(json_profile)
+        #----------------------------------------------
+        def _do_thread():
 
             # -------------------------------------
-            # TASK READY 상태
+            # INIT(STOP) 상태
+            self.tasks_status = Status.INIT
 
-            # task 준비
+            while self.tasks_status != Status.FORCE_STOP_OR_PAUSE:
 
-            for name, task in self.tasks.items():
-                task.start()
+                # status loading
+                self.tasks_status = Status.LOADING
 
-            # queue 준비
+                json_profile = file_to_json(file_path)
 
-            for name, queue in self.queues.items():
-                queue.start()
+                # load queues
+                self.load_queues(json_profile)
 
-            # -------------------------------------
-            # TASK 종료 대기
-            for name, task in self.tasks.items():
-                task.join()
+                # load tasks
+                self.load_tasks(json_profile)
 
-            # 상태변수 클리어
-            self.tasks.clear()
-            self.queues.clear()
-            self.arr_queues[:] = []
+                # -------------------------------------
+                # TASK READY 상태
 
-            # 반복문으로 계속 되는 부분
-            # 다음 container로 넘어가기
+                # task 준비
+                for name, task in self.tasks.items():
+                    task.start()
 
-            self.select_next_container()
+                # queue 준비
+                for name, queue in self.queues.items():
+                    queue.start()
 
+                # status ready
+                self.tasks_status = Status.READY
+
+                # -------------------------------------
+                # RUNNING 상태
+                for name, task in self.tasks.items():
+                    task.resume()
+
+                self.start_time = time.time()
+
+                # status running
+                self.tasks_status = Status.RUNNING
+
+                # -------------------------------------
+                # TASK 종료 대기
+                for name, task in self.tasks.items():
+                    task.join()
+
+                self.calculate_total_processed_counts()
+
+                # 상태변수 클리어
+                self.tasks.clear()
+                self.queues.clear()
+                self.arr_queues[:] = []
+
+                # 반복문으로 계속 되는 부분
+                # 다음 container로 넘어가기
+
+                self.select_next_container()
+
+            if self.profile_loaded:
+                print('>>> ALREADY PROFILE LOADED !!!')
+                return
+
+        self.profile_loaded = True
+        th = Thread(target=_do_thread)
+        th.start()
+
+        pass
+
+
+    #----------------------------------------------
+    # load_queues
     def load_queues(self, json_profile):
 
         for k, json_queue in json_profile['queues'].items():
@@ -85,6 +197,8 @@ class TaskManager():
 
         self.arr_queues = list(sorted(self.arr_queues, key=lambda x: x.stop_order))
 
+    #----------------------------------------------
+    # load_tasks
     def load_tasks(self, json_profile):
 
         if self.active_tasks_name == '':
@@ -132,24 +246,39 @@ class TaskManager():
             q_in = self.get_queue(str_q_in)
             q_out = self.get_queue(str_q_out)
 
-            params = {}
+            for i in range(instance_count):
 
-            params['instance_count'] = instance_count
-            params['q_in'] = q_in
-            params['q_out'] = q_out
-            params['actor'] = actor
+                # params
+                params = {}
+                for k, v in json_task['params'].items():
+                    params[k] = v
 
-            # params
-            for k, v in json_task['params'].items():
-                params[k] = v
+                params['container_idx'] = self.container_idx
+                params['type_id'] = name
+                params['name'] = '{}_{:02d}'.format(name, i)
+                params['instance_id'] = i
+                params['instance_count'] = instance_count
+                params['q_in'] = q_in
+                params['q_out'] = q_out
 
-            _class = self.load_class(str_task_type)
+                counter_id = '{}_{:02d}'.format(name, i)
+                if not (counter_id in self.counters):
+                    self.counters[counter_id] = Value('i', 0)
 
-            task = _class(params)
+                params['processed_count'] = self.counters[counter_id]
 
-            self.add_task(task)
+                # params
+                for k, v in json_task['params'].items():
+                    params[k] = v
 
-    # load task
+                _class = self.load_class(str_task_type)
+
+                task = _class(params)
+
+                self.add_task(task)
+
+    #----------------------------------------------
+    # load_class
     def load_class(self, str_type_path):
 
         # instance type
@@ -173,19 +302,149 @@ class TaskManager():
 
         return _type
 
-    # multi processing(append)
+    #----------------------------------------------
+    # add_task
     def add_task(self, task):
-
         ## param
-        self.tasks[task.actor] = task
+        self.tasks[task.name] = task
         pass
 
+    #----------------------------------------------
+    # add_queue
     def add_queue(self, queue):
         self.queues[queue.name] = queue
         self.arr_queues.append(queue)
 
+    #----------------------------------------------
+    # get_queue
     def get_queue(self, name):
         if name in self.queues:
             return self.queues[name]
         else:
             return None
+
+    #----------------------------------------------
+    # print status
+    def print_status(self):
+        try:
+            if len(self.tasks) > 0:
+                print(self.get_status_strings())
+        except:
+            pass
+        pass
+
+    #----------------------------------------------
+    # get_status_strings
+    def get_status_strings(self):
+
+        result = ''
+        try:
+            buf = StringIO()
+
+            dt = time.time() - self.start_time
+            dt_from_load = time.time() - self.load_time
+
+            stats = self.get_stats()
+
+            write_buf('', buf)
+            write_buf('--------------------------------------------------------------------------------------------------', buf)
+            write_buf('name            alive busy  paused     pid  cpu(%) mem(mb)   queue   cnt/s     sec   total', buf)
+            write_buf('--------------------------------------------------------------------------------------------------', buf)
+
+            max_processed = 0
+
+            for stat in stats:
+
+                processed = stat['processed']
+
+                if processed is None:
+                    processed = 0
+
+                if processed > 0:
+                    per_sec = dt / (processed + 0.000001)
+                    per_sec = min(999999, per_sec)
+                    per_count = processed / (dt + 0.000001)
+                else:
+                    per_sec = 0.0
+                    per_count = 0.0
+
+                alive = 'true  ' if stat['alive'] else 'false '
+                busy = 'true  ' if stat['busy'] else 'false '
+                paused = 'true  ' if stat['paused'] else 'false '
+
+                cpu_f = int(stat['cpu'])
+                if cpu_f == 0:
+                    cpu = '{:8d}'.format(cpu_f)
+                elif cpu_f > 100:
+                    cpu = '{:8d}'.format(cpu_f)
+                else:
+                    cpu = '{:8d}'.format(cpu_f)
+
+                waiting_count = stat['waiting']
+                if waiting_count == 0:
+                    waiting_count = '{:8,}'.format(waiting_count)
+                else:
+                    waiting_count = '{:8,}'.format(waiting_count)
+
+                write_buf('{:16s}{}{}{}{:8d}{}{:8,}{}{:8.2f}{:8.4f}{:12,}'.format(
+                    stat['name'],
+                    alive,
+                    busy,
+                    paused,
+                    stat['pid'],
+                    cpu,
+                    stat['mem'],
+                    waiting_count,
+                    per_count,
+                    per_sec,
+                    alive,
+                    self.counters[stat['name']].value), buf)
+
+                max_processed = max(max_processed, processed)
+
+            write_buf('--------------------------------------------------------------------------------------------------', buf)
+
+            write_buf(
+                'STATUS:[{}]  COUNT: [{:,}]  ELAPSED: [{:.1f}] / [{:.1f}]'.format(
+                    self.tasks_status,
+                    (self.total_processed + max_processed),
+                    dt,
+                    dt_from_load,
+                ), buf)
+
+            write_buf('TASKS:[{}]   IDX:[{}]'.format(self.current_tasks_name, self.container_idx, ), buf)
+            write_buf('--------------------------------------------------------------------------------------------------', buf)
+            write_buf('', buf)
+
+            result = buf.getvalue()
+
+        except:
+               pass
+
+        return result
+
+    #----------------------------------------------
+    # calculate_total_processed_counts
+    def calculate_total_processed_counts(self):
+        count = 0
+
+        for _, task in self.tasks.items():
+            count = max(task.count.value, count)
+
+        self.total_processed += count
+
+        pass
+
+    #----------------------------------------------
+    # get_stats
+    def get_stats(self):
+        stats = []
+
+        for name, task in self.tasks.items():
+            stats.append(task.get_stats())
+
+        stats = list(sorted(stats, key=lambda x: x['name']))
+
+        self.last_stats = stats
+
+        return stats

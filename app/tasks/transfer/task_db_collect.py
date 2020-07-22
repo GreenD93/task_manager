@@ -45,12 +45,11 @@ class TaskDBCollecter(Task):
     def run_self(self):
 
         count = 0
+
         for item in self.collector.get_items():
             if count < 400:
                 self.put_output_data(item)
                 count += 1
-            else:
-                break
 
     def done_self(self):
         pass

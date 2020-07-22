@@ -1,3 +1,6 @@
+# coding: utf-8
+import time
+
 from utils.util import *
 from utils.settings import *
 
