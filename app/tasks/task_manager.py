@@ -24,7 +24,7 @@ class Status(enum.Enum):
     RUNNING                 = 4
     STOPPING                = 5
     STOPPED                 = 6
-    FORCE_STOP_OR_PAUSE      = 99
+    FORCE_STOP_OR_PAUSE     = 99
 
 # watchdog을 매번 부를 시간간격
 WATCHDOG_INTERVAL = 5
@@ -58,7 +58,7 @@ class TaskManager():
         self.tasks_status = Status.INIT
 
         self.profile_loaded = False
-        self.watch_dog_stared = False
+        self.watch_dog_started = False
 
         self.container_idx = 0
 
@@ -93,6 +93,19 @@ class TaskManager():
 
         print('TaskManager.pausing...')
         self.tasks_status = Status.FORCE_STOP_OR_PAUSE
+
+        self.print_status()
+
+        for name, task in self.tasks.items():
+            task.pause()
+
+        if len(self.tasks) > 0:
+            time.sleep(10)
+
+        self.print_status()
+
+        log_info('TaskManager.paused')
+
         pass
 
     #----------------------------------------------
@@ -106,6 +119,42 @@ class TaskManager():
         # 일시멈춤
         self.pause_services()
 
+        #---------------------------------------
+        # 태스크/큐 미리 모아놓기
+        arr_task = []
+        for _, task in self.tasks.items():
+            arr_task.append(task)
+
+        arr_queue = []
+        for _, queue in self.queues.items():
+            arr_queue.append(queue)
+
+        self.print_status()
+
+        #-------------------------------------
+        # 태스크 정지
+        print('stopping tasks...')
+        for task in arr_task:
+            task.stop()
+
+        #-------------------------------------
+        # 큐 정지
+        print('stopping queues...')
+        for queue in arr_queue:
+            queue.stop()
+
+        self.print_status()
+
+        #-------------------------------------
+        for task in arr_task:
+            print('task name:{}, pid:{}, alive:{}'.format(task.name, task.pid, task.is_alive()))
+
+        for queue in arr_queue:
+            print('queue name:{}, empty:{}'.format(queue.name, queue.empty()))
+
+        self.print_status()
+
+        print('TaskManager.stopped')
         pass
 
     #----------------------------------------------
@@ -244,6 +293,9 @@ class TaskManager():
             str_task_type = get_json_value(json_task, 'type', '')
 
             instance_count = get_json_value(json_task, 'instance_count', 1)
+
+            pauseable = get_json_value(json_task, 'pauseable', False)
+
             str_q_in = get_json_value(json_task, 'q_in', '')
             str_q_out = get_json_value(json_task, 'q_out', '')
 
@@ -260,10 +312,15 @@ class TaskManager():
                 params['container_idx'] = self.container_idx
                 params['type_id'] = name
                 params['name'] = '{}_{:02d}'.format(name, i)
+
                 params['instance_id'] = i
                 params['instance_count'] = instance_count
+
+                params['pauseable'] = pauseable
+
                 params['q_in'] = q_in
                 params['q_out'] = q_out
+
 
                 counter_id = '{}_{:02d}'.format(name, i)
                 if not (counter_id in self.counters):
@@ -332,19 +389,92 @@ class TaskManager():
     #----------------------------------------------
     # start_watch_dog
     def start_watch_dog(self):
+
         #----------------------------------------------
         def _do_thread():
 
             while self.tasks_status != Status.FORCE_STOP_OR_PAUSE:
 
                 time.sleep(WATCHDOG_INTERVAL)
+
                 self.print_status()
 
-        if self.watch_dog_stared:
+                # 종료조건이면, 태스크 즉시종료
+                if _is_done():
+
+                    time.sleep(WATCHDOG_INTERVAL)
+
+                    print('>>> WATCHDOG STOPPING TASKS...')
+                    self.tasks_status = Status.STOPPING
+                    self.print_status()
+
+                    _force_stop()
+
+                    print('>>> WATCHDOG STOPPED TASKS.')
+                    self.tasks_status = Status.STOPPED
+
+                time.sleep(WATCHDOG_INTERVAL)
+
+            print('>>> WATCHDOG EXITED !!!')
+
+
+        def _is_done():
+
+            # 아직 시작되지 않았으면, False
+            if self.tasks_status != Status.RUNNING:
+                return False
+
+            # 큐에 데이터가 있으면, False
+            for queue in self.arr_queues:
+                if not queue.empty():
+                    return False
+
+            # task중 무언가가 처리중이면, False
+            for name, task in self.tasks.items():
+                if task.is_busy() and task.is_alive():
+                    return False
+
+            # 그렇지않다면, True
+            return True
+
+        def _force_stop():
+
+            #---------------------------------------
+            # 태스크/큐 미리 모아놓기
+            arr_task = []
+            for _, task in self.tasks.items():
+                arr_task.append(task)
+
+            arr_queue = []
+            for _, queue in self.queues.items():
+                arr_queue.append(queue)
+
+            #---------------------------------------
+            # 태스크 정지
+            log_info('>> [WATCHDOG] STOPPING TASKS...')
+            for task in arr_task:
+                task.stop()
+
+            if len(arr_task) > 0:
+                time.sleep(WATCHDOG_SLEEP_ON_STOPPING)
+            log_info('>> [WATCHDOG] STOPPED TASKS')
+
+            #---------------------------------------
+            # 큐 정지
+            log_info('>> [WATCHDOG] STOPPING QUEUES...')
+            for queue in arr_queue:
+                queue.stop()
+            if len(arr_queue) > 0:
+                time.sleep(WATCHDOG_SLEEP_ON_STOPPING)
+            log_info('>> [WATCHDOG] STOPPED QUEUES')
+
+            pass
+
+        if self.watch_dog_started:
             print('>>> WATCHDOG ALREADY RUNNING !!!')
             return
 
-        self.watch_dog_stared = True
+        self.watch_dog_started = True
         watch_dog_thread = Thread(target=_do_thread)
         watch_dog_thread.start()
 

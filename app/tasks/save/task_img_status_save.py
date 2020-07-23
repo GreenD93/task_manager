@@ -10,7 +10,7 @@ from procs.save.pred_status_save import ImageStatusSaver
 #---------------------------------------------------
 # TaskImageStatusSaver
 
-MAX_COLLECT_COUNT = 400
+MAX_COLLECT_COUNT = 20
 
 class TaskImageStatusSaver(Task):
 
@@ -44,21 +44,23 @@ class TaskImageStatusSaver(Task):
     #---------------------------------------------
     # run_self
     def run_self(self):
+
         count = 0
-        #items = []
+        items = []
 
         while count < MAX_COLLECT_COUNT:
+
             data = self.get_input_data()
+
             if data is not None:
                 time.sleep(0.1)
-
-                self.put_output_data(data)
-                self.count.value += 1
+                items.append(data)
                 count += 1
 
         #-------------------------------------------
-        # 배치로 처리할 대상이 있다면
-        # if count > 0:
-        #     self.status_saver.save_items(items)
-        #     self.count.value += 1
+        #배치로 처리할 대상이 있다면
+        if count > 0:
+            self.status_saver.save_items(items)
+            self.count.value += count
+
         pass

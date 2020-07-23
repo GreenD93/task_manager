@@ -12,7 +12,7 @@ from utils.settings import *
 from procs.train.img.img_batch_predict import ImageBatchPredictor
 
 
-MAX_COLLECT_COUNT = 400
+MAX_COLLECT_COUNT = 100
 
 class TaskModelPredictor(Task):
 

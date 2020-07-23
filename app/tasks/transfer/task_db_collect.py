@@ -8,6 +8,8 @@ from utils.settings import *
 
 from procs.transfer.db_collect import DBCollector
 
+MAX_COLLECT_COUNT = 100
+
 class TaskDBCollecter(Task):
     #---------------------------------------------
     # constructor
@@ -25,6 +27,8 @@ class TaskDBCollecter(Task):
         self.table = get_json_value(params, 'table', '')
         self.rows_per_page = get_json_value(params, 'rows_per_page', 50)
 
+        self.max_limit = get_json_value(params, 'max_limit', 100)
+
         self.collector = None
 
     #-------------------------------------
@@ -37,6 +41,7 @@ class TaskDBCollecter(Task):
             self.schema,
 
             self.table,
+            self.max_limit,
             self.rows_per_page
         )
 
@@ -48,14 +53,26 @@ class TaskDBCollecter(Task):
     # run_self
     def run_self(self):
 
-        count = 0
+        item_count = 0
 
         for item in self.collector.get_items():
-            time.sleep(0.5)
-            if count < 400:
-                self.put_output_data(item)
-                self.count.value += 1
-                count += 1
+
+            if item_count >= self.max_limit:
+                self.pause_event.set()
+                break
+
+            # 만약 중지상태이면, 리턴
+            if self.can_pause_or_stop():
+                break
+
+            self.put_output_data(item)
+            self.count.value += 1
+            item_count += 1
 
     def done_self(self):
         pass
+
+    #-------------------------------------
+    # can_pause_or_stop
+    def can_pause_or_stop(self):
+        return self.pause_event.is_set() or self.stop_event.is_set()

@@ -8,7 +8,7 @@ from utils.settings import *
 
 from procs.transfer.img_load import ImageLoader
 
-MAX_COLLECT_COUNT = 400
+MAX_COLLECT_COUNT = 100
 
 class TaskImgLoader(Task):
     #---------------------------------------------

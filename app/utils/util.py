@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+import time
 
 import pytz
 
@@ -32,6 +33,21 @@ def file_to_json(path):
     with open(path) as data_file:
         result = json.load(data_file)
     return result
+
+def lap_time(msg, ct=None, log=True):
+    t2 = time.time()
+    t1 = t2 if ct is None else ct
+
+    dt = t2 - t1
+
+    if log:
+
+        if dt == 0:
+            print('## lap[{}]'.format(msg))
+        else:
+            print('## lap[{}]: {:.8f}'.format(msg, dt))
+
+    return t2
 
 ############################################
 # file utilities

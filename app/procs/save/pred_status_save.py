@@ -54,6 +54,7 @@ class ImageStatusSaver():
                 db.close()
 
     def _save_items(self, db, curs, arr_data):
+
         count = len(arr_data)
 
         if count == 0:
@@ -63,6 +64,7 @@ class ImageStatusSaver():
 
         #------------------------------------------------------------
         try:
+
             for data in arr_data:
 
                 reviewid = int(data['reviewid'])

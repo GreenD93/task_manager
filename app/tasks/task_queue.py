@@ -42,6 +42,7 @@ class TaskQueue(object):
 
         try:
             result = self.q.empty()
+
         except:
             result = True
 

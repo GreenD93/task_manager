@@ -39,6 +39,7 @@
 
 
   "tasks_process_all": {
+
     "tx_01_CD": {
       "actor": "DBCollector",
       "comment": "# collect data from db ................................",
@@ -48,14 +49,19 @@
       "q_in": "",
       "q_out": "q0",
       "loop": true,
+      "pauseable": true,
 
       "params": {
         "host": "127.0.0.1",
         "user": "vai",
         "passwd": "wakdlsem",
         "schema": "vai_db",
-        "table": "test"
+        "table": "test",
+
+        "max_limit": 100,
+        "wait_secs_on_queue": 10
       }
+
     },
 
     "tx_02_LI": {
@@ -70,6 +76,7 @@
 
       "params": {
       }
+
     },
 
     "tx_03_CS": {
@@ -86,6 +93,7 @@
         "item_type": "image",
         "model_name": "cat_model"
       }
+
     },
 
     "tx_04_SD": {
@@ -104,6 +112,7 @@
         "passwd": "wakdlsem",
         "schema": "vai_db"
       }
+
     }
   },
 
@@ -133,11 +142,5 @@
       }
     }
   }
-
-
-
-
-
-
 
 }
