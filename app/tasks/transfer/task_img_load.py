@@ -22,23 +22,28 @@ class TaskImgLoader(Task):
     # init_self
     def init_self(self):
         self.loader = ImageLoader()
+
+        self.count.value = 0
         pass
 
     def run_self(self):
 
         count = 0
-        items = []
+        #items = []
 
         while count < MAX_COLLECT_COUNT:
 
             data = self.get_input_data()
 
             if data is not None:
-                #self.loader.temp_load_img(data)
-                items.append(data)
+                time.sleep(1)
+
+                self.put_output_data(data)
+                self.count.value += 1
                 count += 1
 
 
         # 특정 개수 까지 모았다가 한번에 queue에 집어넣기
-        for item in items:
-            self.put_output_data(item)
+        # for item in items:
+        #     self.put_output_data(item)
+        #     self.count.value += 1

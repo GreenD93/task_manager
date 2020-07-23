@@ -140,12 +140,12 @@ class Task(Process):
         p = psutil.Process(self.pid)
         m = p.memory_info()[0] / (1024*1024)
         cpu_percent = p.cpu_percent(interval=0.1)
+
         # cpu_percent = p.cpu_percent()
         waiting = 0 if (self.q_in is None) else self.q_in.qsize()
 
-        # processed = 0 if (not hasattr(self, 'count')) else self.count
-        # processed = self.count.value
-        processed = 1
+        processed = self.count.value
+
         et = 0 if (self.st_time == 0) else self.get_lap_time()
 
 

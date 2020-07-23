@@ -27,7 +27,7 @@ class Status(enum.Enum):
     FORCE_STOP_OR_PAUSE      = 99
 
 # watchdog을 매번 부를 시간간격
-WATCHDOG_INTERVAL = 10
+WATCHDOG_INTERVAL = 5
 
 # 종료조건시에 각 진행마다 슬립시간
 WATCHDOG_SLEEP_ON_STOPPING = 5
@@ -57,6 +57,9 @@ class TaskManager():
 
         self.tasks_status = Status.INIT
 
+        self.profile_loaded = False
+        self.watch_dog_stared = False
+
         self.container_idx = 0
 
         self.active_tasks_name = ''
@@ -81,6 +84,7 @@ class TaskManager():
     def load_services(self, file_path):
         print('TaskManager.load')
         self.load_tasks_from_profile(file_path)
+        self.start_watch_dog()
         pass
 
     #----------------------------------------------
@@ -323,6 +327,30 @@ class TaskManager():
         else:
             return None
 
+
+
+    #----------------------------------------------
+    # start_watch_dog
+    def start_watch_dog(self):
+        #----------------------------------------------
+        def _do_thread():
+
+            while self.tasks_status != Status.FORCE_STOP_OR_PAUSE:
+
+                time.sleep(WATCHDOG_INTERVAL)
+                self.print_status()
+
+        if self.watch_dog_stared:
+            print('>>> WATCHDOG ALREADY RUNNING !!!')
+            return
+
+        self.watch_dog_stared = True
+        watch_dog_thread = Thread(target=_do_thread)
+        watch_dog_thread.start()
+
+        pass
+
+
     #----------------------------------------------
     # print status
     def print_status(self):
@@ -338,88 +366,86 @@ class TaskManager():
     def get_status_strings(self):
 
         result = ''
-        try:
-            buf = StringIO()
 
-            dt = time.time() - self.start_time
-            dt_from_load = time.time() - self.load_time
+        buf = StringIO()
 
-            stats = self.get_stats()
+        dt = time.time() - self.start_time
+        dt_from_load = time.time() - self.load_time
 
-            write_buf('', buf)
-            write_buf('--------------------------------------------------------------------------------------------------', buf)
-            write_buf('name            alive busy  paused     pid  cpu(%) mem(mb)   queue   cnt/s     sec   total', buf)
-            write_buf('--------------------------------------------------------------------------------------------------', buf)
+        stats = self.get_stats()
 
-            max_processed = 0
+        write_buf('', buf)
+        write_buf('--------------------------------------------------------------------------------------------------', buf)
+        write_buf('name            alive busy  paused     pid  cpu(%) mem(mb)   queue   cnt/s     sec   total', buf)
+        write_buf('--------------------------------------------------------------------------------------------------', buf)
 
-            for stat in stats:
+        max_processed = 0
 
-                processed = stat['processed']
+        for num, stat in enumerate(stats):
 
-                if processed is None:
-                    processed = 0
+            processed = stat['processed']
 
-                if processed > 0:
-                    per_sec = dt / (processed + 0.000001)
-                    per_sec = min(999999, per_sec)
-                    per_count = processed / (dt + 0.000001)
-                else:
-                    per_sec = 0.0
-                    per_count = 0.0
+            if processed is None:
+                processed = 0
 
-                alive = 'true  ' if stat['alive'] else 'false '
-                busy = 'true  ' if stat['busy'] else 'false '
-                paused = 'true  ' if stat['paused'] else 'false '
+            if processed > 0:
+                per_sec = dt / (processed + 0.000001)
+                per_sec = min(999999, per_sec)
+                per_count = processed / (dt + 0.000001)
+            else:
+                per_sec = 0.0
+                per_count = 0.0
 
-                cpu_f = int(stat['cpu'])
-                if cpu_f == 0:
-                    cpu = '{:8d}'.format(cpu_f)
-                elif cpu_f > 100:
-                    cpu = '{:8d}'.format(cpu_f)
-                else:
-                    cpu = '{:8d}'.format(cpu_f)
+            alive = 'true  ' if stat['alive'] else 'false '
+            busy = 'true  ' if stat['busy'] else 'false '
+            paused = 'true  ' if stat['paused'] else 'false '
 
-                waiting_count = stat['waiting']
-                if waiting_count == 0:
-                    waiting_count = '{:8,}'.format(waiting_count)
-                else:
-                    waiting_count = '{:8,}'.format(waiting_count)
+            cpu_f = int(stat['cpu'])
 
-                write_buf('{:16s}{}{}{}{:8d}{}{:8,}{}{:8.2f}{:8.4f}{:12,}'.format(
-                    stat['name'],
-                    alive,
-                    busy,
-                    paused,
-                    stat['pid'],
-                    cpu,
-                    stat['mem'],
-                    waiting_count,
-                    per_count,
-                    per_sec,
-                    alive,
-                    self.counters[stat['name']].value), buf)
+            if cpu_f == 0:
+                cpu = '{:8d}'.format(cpu_f)
+            elif cpu_f > 100:
+                cpu = '{:8d}'.format(cpu_f)
+            else:
+                cpu = '{:8d}'.format(cpu_f)
 
-                max_processed = max(max_processed, processed)
+            waiting_count = stat['waiting']
+            if waiting_count == 0:
+                waiting_count = '{:8,}'.format(waiting_count)
+            else:
+                waiting_count = '{:8,}'.format(waiting_count)
 
-            write_buf('--------------------------------------------------------------------------------------------------', buf)
 
-            write_buf(
-                'STATUS:[{}]  COUNT: [{:,}]  ELAPSED: [{:.1f}] / [{:.1f}]'.format(
-                    self.tasks_status,
-                    (self.total_processed + max_processed),
-                    dt,
-                    dt_from_load,
-                ), buf)
+            write_buf('{:16s}{}{}{}{:8d}{}{:8,}{}{:8.2f}{:8.4f}{:12,}'.format(
+                stat['name'],
+                alive,
+                busy,
+                paused,
+                stat['pid'],
+                cpu,
+                stat['mem'],
+                waiting_count,
+                per_count,
+                per_sec,
+                self.counters[stat['name']].value), buf)
 
-            write_buf('TASKS:[{}]   IDX:[{}]'.format(self.current_tasks_name, self.container_idx, ), buf)
-            write_buf('--------------------------------------------------------------------------------------------------', buf)
-            write_buf('', buf)
+            max_processed = max(max_processed, processed)
 
-            result = buf.getvalue()
+        write_buf('--------------------------------------------------------------------------------------------------', buf)
 
-        except:
-               pass
+        write_buf(
+            'STATUS:[{}]  COUNT: [{:,}]  ELAPSED: [{:.1f}] / [{:.1f}]'.format(
+                self.tasks_status,
+                (self.total_processed + max_processed),
+                dt,
+                dt_from_load,
+            ), buf)
+
+        write_buf('TASKS:[{}]   IDX:[{}]'.format(self.current_tasks_name, self.container_idx, ), buf)
+        write_buf('--------------------------------------------------------------------------------------------------', buf)
+        write_buf('', buf)
+
+        result = buf.getvalue()
 
         return result
 

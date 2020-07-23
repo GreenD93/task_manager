@@ -28,6 +28,8 @@ class TaskModelPredictor(Task):
     # init_self
     def init_self(self):
         self.predictor = ImageBatchPredictor(self.model_name)
+
+        self.count.value = 0
         pass
 
     # -------------------------------------
@@ -39,18 +41,22 @@ class TaskModelPredictor(Task):
 
         while count < MAX_COLLECT_COUNT:
             data = self.get_input_data()
+
             if data is not None:
-                items.append(data)
+                time.sleep(0.1)
+
+                self.put_output_data(data)
+                self.count.value += 1
                 count += 1
 
         #-------------------------------------------
         # 배치로 처리할 대상이 있다면
-        if count > 0:
-
+        # if count > 0:
             # 배치로 prediction
             #result_items = self.predictor.batch_check_items(items)
 
             # 결과를 다음 큐로 푸시
-            for item in items:
-                self.put_output_data(item)
+            # for item in items:
+            #     self.put_output_data(item)
+            #     self.count.value+=1
         pass

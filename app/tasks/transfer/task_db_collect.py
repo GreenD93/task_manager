@@ -40,15 +40,21 @@ class TaskDBCollecter(Task):
             self.rows_per_page
         )
 
+        self.count.value = 0
+
         pass
 
+    #---------------------------------------------
+    # run_self
     def run_self(self):
 
         count = 0
 
         for item in self.collector.get_items():
+            time.sleep(0.5)
             if count < 400:
                 self.put_output_data(item)
+                self.count.value += 1
                 count += 1
 
     def done_self(self):
