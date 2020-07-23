@@ -11,7 +11,7 @@ from utils.settings import *
 
 from procs.train.img.img_batch_predict import ImageBatchPredictor
 
-
+MAX_COLLECT_TIME = 1
 MAX_COLLECT_COUNT = 100
 
 class TaskModelPredictor(Task):
@@ -38,25 +38,28 @@ class TaskModelPredictor(Task):
 
         count = 0
         items = []
+        start_t = time.time()
+        delta_t = 0
 
-        while count < MAX_COLLECT_COUNT:
+
+        while (delta_t < MAX_COLLECT_TIME) and (count < MAX_COLLECT_COUNT):
+
             data = self.get_input_data()
 
             if data is not None:
                 time.sleep(0.1)
-
-                self.put_output_data(data)
-                self.count.value += 1
+                items.append(data)
                 count += 1
+
+            delta_t = time.time() - start_t
 
         #-------------------------------------------
         # 배치로 처리할 대상이 있다면
-        # if count > 0:
-            # 배치로 prediction
-            #result_items = self.predictor.batch_check_items(items)
+        if count > 0:
+            #결과를 다음 큐로 푸시
+            for item in items:
+                self.put_output_data(item)
 
-            # 결과를 다음 큐로 푸시
-            # for item in items:
-            #     self.put_output_data(item)
-            #     self.count.value+=1
+            self.count.value += count
+
         pass

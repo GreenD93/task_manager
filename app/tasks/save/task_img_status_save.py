@@ -9,7 +9,7 @@ from procs.save.pred_status_save import ImageStatusSaver
 
 #---------------------------------------------------
 # TaskImageStatusSaver
-
+MAX_COLLECT_TIME = 1
 MAX_COLLECT_COUNT = 20
 
 class TaskImageStatusSaver(Task):
@@ -47,15 +47,18 @@ class TaskImageStatusSaver(Task):
 
         count = 0
         items = []
+        start_t = time.time()
+        delta_t = 0
 
-        while count < MAX_COLLECT_COUNT:
+        while (delta_t < MAX_COLLECT_TIME) and (count < MAX_COLLECT_COUNT):
 
             data = self.get_input_data()
-
             if data is not None:
                 time.sleep(0.1)
                 items.append(data)
                 count += 1
+
+            delta_t = time.time() - start_t
 
         #-------------------------------------------
         #배치로 처리할 대상이 있다면

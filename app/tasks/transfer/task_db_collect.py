@@ -65,6 +65,7 @@ class TaskDBCollecter(Task):
             if self.can_pause_or_stop():
                 break
 
+            time.sleep(0.1)
             self.put_output_data(item)
             self.count.value += 1
             item_count += 1

@@ -8,6 +8,9 @@ from utils.settings import *
 
 from procs.transfer.img_load import ImageLoader
 
+#---------------------------------------------------
+# TaskImgLoader
+MAX_COLLECT_TIME = 1
 MAX_COLLECT_COUNT = 100
 
 class TaskImgLoader(Task):
@@ -29,21 +32,26 @@ class TaskImgLoader(Task):
     def run_self(self):
 
         count = 0
-        #items = []
+        items = []
+        start_t = time.time()
+        delta_t = 0
 
-        while count < MAX_COLLECT_COUNT:
+        while (delta_t < MAX_COLLECT_TIME) and (count < MAX_COLLECT_COUNT):
 
             data = self.get_input_data()
 
             if data is not None:
                 time.sleep(1)
-
-                self.put_output_data(data)
-                self.count.value += 1
+                items.append(data)
                 count += 1
 
+            delta_t = time.time() - start_t
 
-        # 특정 개수 까지 모았다가 한번에 queue에 집어넣기
-        # for item in items:
-        #     self.put_output_data(item)
-        #     self.count.value += 1
+        #-------------------------------------------
+        # 배치로 처리할 대상이 있다면
+        if count > 0:
+            #결과를 다음 큐로 푸시
+            for item in items:
+                self.put_output_data(item)
+
+            self.count.value += count

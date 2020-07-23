@@ -30,7 +30,7 @@ class Status(enum.Enum):
 WATCHDOG_INTERVAL = 5
 
 # 종료조건시에 각 진행마다 슬립시간
-WATCHDOG_SLEEP_ON_STOPPING = 5
+WATCHDOG_SLEEP_ON_STOPPING = 1
 
 class TaskManager():
 
@@ -406,6 +406,7 @@ class TaskManager():
 
                     print('>>> WATCHDOG STOPPING TASKS...')
                     self.tasks_status = Status.STOPPING
+
                     self.print_status()
 
                     _force_stop()
@@ -415,8 +416,8 @@ class TaskManager():
 
                 time.sleep(WATCHDOG_INTERVAL)
 
-            print('>>> WATCHDOG EXITED !!!')
 
+            print('>>> WATCHDOG EXITED !!!')
 
         def _is_done():
 
@@ -452,6 +453,7 @@ class TaskManager():
             #---------------------------------------
             # 태스크 정지
             log_info('>> [WATCHDOG] STOPPING TASKS...')
+
             for task in arr_task:
                 task.stop()
 

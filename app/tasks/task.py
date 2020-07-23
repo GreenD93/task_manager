@@ -148,13 +148,13 @@ class Task(Process):
 
                 if (self.q_in is not None) and (self.q_in.empty()):
                     time.sleep(self.wait_secs_on_queue)
-
                     self.set_busy(False)
 
                 else:
-
                     self.run_self()
                     self.set_busy(False)
+
+        self.set_busy(False)
 
         t = lap_time('[{}] Task.run - end'.format(self.name), t)
 
@@ -188,10 +188,18 @@ class Task(Process):
     # get_input_data
     def get_input_data(self):
 
-        if self.q_in is not None:
-            result = self.q_in.get()
+        result = None
 
-            if result is not None:
+        if self.q_in is not None:
+
+            if self.q_in.qsize():
+
+                result = self.q_in.get()
+
+                if result is not None:
+                    self.set_busy(True)
+
+            else:
                 self.set_busy(True)
 
         if self.is_first_data:
