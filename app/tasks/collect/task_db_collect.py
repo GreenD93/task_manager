@@ -27,6 +27,7 @@ class TaskDBCollecter(Task):
         self.table = get_json_value(params, 'table', '')
         self.rows_per_page = get_json_value(params, 'rows_per_page', 50)
 
+        self.out_buf_hold_limit = get_json_value(params, 'out_buf_hold_limit', 10000)
         self.max_limit = get_json_value(params, 'max_limit', 100)
 
         self.collector = None
@@ -53,6 +54,10 @@ class TaskDBCollecter(Task):
     # run_self
     def run_self(self):
 
+        if self.out_buffer_full():
+            time.sleep(0.2)
+            return
+
         item_count = 0
 
         for item in self.collector.get_items():
@@ -77,3 +82,13 @@ class TaskDBCollecter(Task):
     # can_pause_or_stop
     def can_pause_or_stop(self):
         return self.pause_event.is_set() or self.stop_event.is_set()
+
+    #-------------------------------------
+    # out_buffer_full
+    def out_buffer_full(self):
+
+        # 출력버퍼에 1만개 이상 있는지 여부 확인
+        if (self.q_out is not None) and (self.q_out.qsize() > self.out_buf_hold_limit):  # 10000
+            return True
+
+        return False

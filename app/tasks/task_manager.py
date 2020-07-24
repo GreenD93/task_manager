@@ -30,7 +30,7 @@ class Status(enum.Enum):
 WATCHDOG_INTERVAL = 5
 
 # 종료조건시에 각 진행마다 슬립시간
-WATCHDOG_SLEEP_ON_STOPPING = 0.2
+WATCHDOG_SLEEP_ON_STOPPING = 2
 
 class TaskManager():
 
@@ -219,10 +219,19 @@ class TaskManager():
                 self.queues.clear()
                 self.arr_queues[:] = []
 
-                # 반복문으로 계속 되는 부분
-                # 다음 container로 넘어가기
+                # 만약 사용자가 태스크를 종료했다면
+                if self.tasks_status == Status.FORCE_STOP_OR_PAUSE:
+                    pass
 
-                self.select_next_container()
+                else:
+                    self.tasks_status = Status.INIT
+                    # 반복문으로 계속 되는 부분
+                    # 다음 container로 넘어가기
+                    self.select_next_container()
+
+                    self.print_status()
+
+                    time.sleep(5)
 
             if self.profile_loaded:
                 print('>>> ALREADY PROFILE LOADED !!!')

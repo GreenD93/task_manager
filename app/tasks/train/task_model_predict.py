@@ -22,6 +22,8 @@ class TaskModelPredictor(Task):
     def __init__(self, params={}):
         super(TaskModelPredictor, self).__init__(params)
         self.model_name = get_json_value(params, 'model_name', 'no_model')
+
+        self.out_buf_hold_limit = get_json_value(params, 'out_buf_hold_limit', 10000)
         self.predictor = None
 
     # -------------------------------------
@@ -35,6 +37,10 @@ class TaskModelPredictor(Task):
     # -------------------------------------
     # run_self
     def run_self(self):
+
+        if self.out_buffer_full():
+            sleep(0.2)
+            return
 
         count = 0
         items = []
@@ -63,3 +69,12 @@ class TaskModelPredictor(Task):
             self.count.value += count
 
         pass
+
+    #-------------------------------------
+    # out_buffer_full
+    def out_buffer_full(self):
+        # 출력버퍼에 1만개 이상 있는지 여부 확인
+        if (self.q_out is not None) and (self.q_out.qsize() > self.out_buf_hold_limit):  # 10000
+            return True
+
+        return False
