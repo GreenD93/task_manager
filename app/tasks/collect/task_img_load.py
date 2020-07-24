@@ -6,7 +6,7 @@ from tasks.task import Task
 from utils.util import *
 from utils.settings import *
 
-from procs.transfer.img_load import ImageLoader
+from procs.collect.img_load import ImageLoader
 
 #---------------------------------------------------
 # TaskImgLoader

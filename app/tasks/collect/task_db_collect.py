@@ -6,7 +6,7 @@ from tasks.task import Task
 from utils.util import *
 from utils.settings import *
 
-from procs.transfer.db_collect import DBCollector
+from procs.collect.db_collect import DBCollector
 
 MAX_COLLECT_COUNT = 100
 

@@ -44,7 +44,7 @@
       "actor": "DBCollector",
       "comment": "# collect data from db ................................",
       "enabled": true,
-      "type": "tasks.transfer.task_db_collect.TaskDBCollecter",
+      "type": "tasks.collect.task_db_collect.TaskDBCollecter",
       "instance_count": 1,
       "q_in": "",
       "q_out": "q0",
@@ -61,22 +61,21 @@
         "max_limit": 40,
         "wait_secs_on_queue": 10
       }
-
     },
 
     "tx_02_LI": {
       "actor": "ImageLoader",
       "comment": "# 이미지 로딩 ................................",
       "enabled": true,
-      "type": "tasks.transfer.task_img_load.TaskImgLoader",
+      "type": "tasks.collect.task_img_load.TaskImgLoader",
       "instance_count": 1,
       "q_in": "q0",
       "q_out": "q1",
       "loop": true,
 
       "params": {
-      }
 
+      }
     },
 
     "tx_03_CS": {
@@ -93,7 +92,6 @@
         "item_type": "image",
         "model_name": "cat_model"
       }
-
     },
 
     "tx_04_SD": {
@@ -112,7 +110,6 @@
         "passwd": "wakdlsem",
         "schema": "vai_db"
       }
-
     }
   },
 
