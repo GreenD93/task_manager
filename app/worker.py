@@ -1,3 +1,4 @@
+import sys
 import os
 import time
 import psutil
@@ -14,9 +15,13 @@ from utils.settings import *
 
 from flask import Flask
 
+# do not make __pycache__ file
+sys.dont_write_bytecode = True
 port_no = 5000
 
 app = Flask(__name__)
+
+init_logger()
 
 #----------------------------------------
 # load
@@ -57,22 +62,24 @@ def req_pids_procs():
 #----------------------------------------
 # starter
 def start_runner():
+
     def start_loop():
         not_started = True
+
         while not_started:
 
             time.sleep(5)
 
-            print('In start loop')
+            log_info('In start loop')
 
             r = requests.get('http://127.0.0.1:{}/load'.format(port_no))
 
             if r.status_code == 200:
-                print('Server started, quiting start_loop')
+                log_info('Server started, quiting start_loop')
                 not_started = False
             print(r.status_code)
 
-    print('Started runner')
+    log_info('Started runner')
     thread = threading.Thread(target=start_loop)
     thread.start()
 

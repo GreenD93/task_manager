@@ -133,13 +133,13 @@ class TaskManager():
 
         #-------------------------------------
         # 태스크 정지
-        print('stopping tasks...')
+        log_info('stopping tasks...')
         for task in arr_task:
             task.stop()
 
         #-------------------------------------
         # 큐 정지
-        print('stopping queues...')
+        log_info('stopping queues...')
         for queue in arr_queue:
             queue.stop()
 
@@ -147,14 +147,14 @@ class TaskManager():
 
         #-------------------------------------
         for task in arr_task:
-            print('task name:{}, pid:{}, alive:{}'.format(task.name, task.pid, task.is_alive()))
+            log_info('task name:{}, pid:{}, alive:{}'.format(task.name, task.pid, task.is_alive()))
 
         for queue in arr_queue:
-            print('queue name:{}, empty:{}'.format(queue.name, queue.empty()))
+            log_info('queue name:{}, empty:{}'.format(queue.name, queue.empty()))
 
         self.print_status()
 
-        print('TaskManager.stopped')
+        log_info('TaskManager.stopped')
         pass
 
     #----------------------------------------------
@@ -234,7 +234,7 @@ class TaskManager():
                     time.sleep(5)
 
             if self.profile_loaded:
-                print('>>> ALREADY PROFILE LOADED !!!')
+                log_info('>>> ALREADY PROFILE LOADED !!!')
                 return
 
         self.profile_loaded = True
@@ -262,6 +262,10 @@ class TaskManager():
     #----------------------------------------------
     # load_tasks
     def load_tasks(self, json_profile):
+
+        log_info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        log_info('>>> ACTIVE TASKS: {}'.format(self.active_tasks_name))
+        log_info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
 
         if self.active_tasks_name == '':
             self.active_tasks_name = json_profile['commons']['active_tasks']
@@ -292,7 +296,7 @@ class TaskManager():
             active_tasks = json_profile[self.active_tasks_name]
             self.current_tasks_name = self.active_tasks_name
 
-        pprint(active_tasks)
+        #pprint(active_tasks)
 
         # get task params
         for name, json_task in active_tasks.items():
@@ -347,6 +351,11 @@ class TaskManager():
 
                 self.add_task(task)
 
+                log_info('task: {}'.format(task))
+                log_info('task q_in: {}'.format(task.q_in))
+                log_info('task q_out: {}'.format(task.q_out))
+
+            pass
     #----------------------------------------------
     # load_class
     def load_class(self, str_type_path):
@@ -415,20 +424,20 @@ class TaskManager():
 
                     if _is_done():
 
-                        print('>>> WATCHDOG STOPPING TASKS...')
+                        log_info('>>> WATCHDOG STOPPING TASKS...')
                         self.tasks_status = Status.STOPPING
 
                         self.print_status()
 
                         _force_stop()
 
-                        print('>>> WATCHDOG STOPPED TASKS.')
+                        log_info('>>> WATCHDOG STOPPED TASKS.')
                         self.tasks_status = Status.STOPPED
 
                 time.sleep(WATCHDOG_INTERVAL)
 
 
-            print('>>> WATCHDOG EXITED !!!')
+            log_info('>>> WATCHDOG EXITED !!!')
 
         def _is_done():
 
@@ -463,7 +472,7 @@ class TaskManager():
 
             #---------------------------------------
             # 태스크 정지
-            print('>> [WATCHDOG] STOPPING TASKS...')
+            log_info('>> [WATCHDOG] STOPPING TASKS...')
 
             for task in arr_task:
                 task.stop()
@@ -471,23 +480,23 @@ class TaskManager():
             if len(arr_task) > 0:
                 time.sleep(WATCHDOG_SLEEP_ON_STOPPING)
 
-            print('>> [WATCHDOG] STOPPED TASKS')
+            log_info('>> [WATCHDOG] STOPPED TASKS')
 
             #---------------------------------------
             # 큐 정지
-            print('>> [WATCHDOG] STOPPING QUEUES...')
+            log_info('>> [WATCHDOG] STOPPING QUEUES...')
             for queue in arr_queue:
                 queue.stop()
 
             if len(arr_queue) > 0:
                 time.sleep(WATCHDOG_SLEEP_ON_STOPPING)
 
-            print('>> [WATCHDOG] STOPPED QUEUES')
+            log_info('>> [WATCHDOG] STOPPED QUEUES')
 
             pass
 
         if self.watch_dog_started:
-            print('>>> WATCHDOG ALREADY RUNNING !!!')
+            log_info('>>> WATCHDOG ALREADY RUNNING !!!')
             return
 
         self.watch_dog_started = True
@@ -502,7 +511,7 @@ class TaskManager():
     def print_status(self):
         try:
             if len(self.tasks) > 0:
-                print(self.get_status_strings())
+                log_info(self.get_status_strings())
         except:
             pass
         pass

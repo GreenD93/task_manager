@@ -57,7 +57,7 @@ class Task(Process):
     #-------------------------------------
     # pause
     def pause(self):
-        print('Task.pause: {}'.format(self.name))
+        log_info('Task.pause: {}'.format(self.name))
         self.pause_event.set()
         pass
 
@@ -66,7 +66,7 @@ class Task(Process):
     def resume(self):
         if self.pause_event.is_set():
             self.st_time = time.time()
-            print('Task.resume: {}'.format(self.name))
+            log_info('Task.resume: {}'.format(self.name))
             self.pause_event.clear()
         pass
 
@@ -124,7 +124,7 @@ class Task(Process):
 
         self.set_busy(True)
 
-        print('Task.run:{}'.format(self.name))
+        log_info('Task.run:{}'.format(self.name))
 
         self.init_self()
 
@@ -138,7 +138,7 @@ class Task(Process):
 
                 self.init_lap_time()
                 self.pause_self()
-                print('[PAUSED] {} : sleeping'.format(self.name))
+                log_info('[PAUSED] {} : sleeping'.format(self.name))
                 time.sleep(self.wait_secs_on_queue)
 
             # 만약 실행상태이면

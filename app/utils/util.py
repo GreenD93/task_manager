@@ -8,9 +8,11 @@ import pytz
 from pprint import pprint
 from datetime import datetime
 
+def init_logger():
+    logging.basicConfig(level=logging.INFO, format='[%(levelname)s]%(asctime)s| %(message)s', datefmt='%m-%d %H:%M:%S')
+    pass
+
 def log_info(s):
-    s = replace_log_tag(s)
-    # log_info(s)
 
     logger = logging.getLogger("filelog")
     logger.info(s)
@@ -82,25 +84,6 @@ def str_to_json(s):
 
 def get_filename(file_path):
     return os.path.basename(file_path)
-
-#---------------------------------------------
-RESET_SEQ   = "\033[0m"
-BOLD_SEQ    = "\033[1m"
-RED_SEQ     = "\033[1;31m"
-GREEN_SEQ   = "\033[1;32m"
-YELLOW_SEQ   = "\033[1;33m"
-BLUE_SEQ    = "\033[1;34m"
-MAGENTA_SEQ = "\033[1;35m"
-CYAN_SEQ    = "\033[1;36m"
-
-def replace_log_tag(s):
-    s = s.replace('$RESET', RESET_SEQ)
-    s = s.replace('$BOLD', BOLD_SEQ)
-    s = s.replace('$GREEN', GREEN_SEQ)
-    s = s.replace('$YELLOW', YELLOW_SEQ)
-    s = s.replace('$MAGENTA', MAGENTA_SEQ)
-    s = s.replace('$CYAN', CYAN_SEQ)
-    return s
 
 #-------------------------------------
 # write_buf
