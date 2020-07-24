@@ -30,7 +30,7 @@ class Status(enum.Enum):
 WATCHDOG_INTERVAL = 5
 
 # 종료조건시에 각 진행마다 슬립시간
-WATCHDOG_SLEEP_ON_STOPPING = 1
+WATCHDOG_SLEEP_ON_STOPPING = 0.2
 
 class TaskManager():
 
@@ -104,7 +104,7 @@ class TaskManager():
 
         self.print_status()
 
-        log_info('TaskManager.paused')
+        print('TaskManager.paused')
 
         pass
 
@@ -404,15 +404,17 @@ class TaskManager():
 
                     time.sleep(WATCHDOG_INTERVAL)
 
-                    print('>>> WATCHDOG STOPPING TASKS...')
-                    self.tasks_status = Status.STOPPING
+                    if _is_done():
 
-                    self.print_status()
+                        print('>>> WATCHDOG STOPPING TASKS...')
+                        self.tasks_status = Status.STOPPING
 
-                    _force_stop()
+                        self.print_status()
 
-                    print('>>> WATCHDOG STOPPED TASKS.')
-                    self.tasks_status = Status.STOPPED
+                        _force_stop()
+
+                        print('>>> WATCHDOG STOPPED TASKS.')
+                        self.tasks_status = Status.STOPPED
 
                 time.sleep(WATCHDOG_INTERVAL)
 
@@ -452,23 +454,26 @@ class TaskManager():
 
             #---------------------------------------
             # 태스크 정지
-            log_info('>> [WATCHDOG] STOPPING TASKS...')
+            print('>> [WATCHDOG] STOPPING TASKS...')
 
             for task in arr_task:
                 task.stop()
 
             if len(arr_task) > 0:
                 time.sleep(WATCHDOG_SLEEP_ON_STOPPING)
-            log_info('>> [WATCHDOG] STOPPED TASKS')
+
+            print('>> [WATCHDOG] STOPPED TASKS')
 
             #---------------------------------------
             # 큐 정지
-            log_info('>> [WATCHDOG] STOPPING QUEUES...')
+            print('>> [WATCHDOG] STOPPING QUEUES...')
             for queue in arr_queue:
                 queue.stop()
+
             if len(arr_queue) > 0:
                 time.sleep(WATCHDOG_SLEEP_ON_STOPPING)
-            log_info('>> [WATCHDOG] STOPPED QUEUES')
+
+            print('>> [WATCHDOG] STOPPED QUEUES')
 
             pass
 
@@ -582,18 +587,6 @@ class TaskManager():
         return result
 
     #----------------------------------------------
-    # calculate_total_processed_counts
-    def calculate_total_processed_counts(self):
-        count = 0
-
-        for _, task in self.tasks.items():
-            count = max(task.count.value, count)
-
-        self.total_processed += count
-
-        pass
-
-    #----------------------------------------------
     # get_stats
     def get_stats(self):
         stats = []
@@ -606,3 +599,27 @@ class TaskManager():
         self.last_stats = stats
 
         return stats
+
+    #----------------------------------------------
+    # calculate_total_processed_counts
+    def calculate_total_processed_counts(self):
+        count = 0
+
+        for _, task in self.tasks.items():
+            count = max(task.count.value, count)
+
+        self.total_processed += count
+
+        pass
+
+    #----------------------------------------------
+    # get_pids
+    def get_pids(self):
+        pids = []
+
+        for name, task in self.tasks.items():
+            pids.append(task.pid)
+
+        pids = list(sorted(pids))
+
+        return pids

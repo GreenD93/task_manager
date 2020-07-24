@@ -40,6 +40,21 @@ def req_stop_procs():
     return "stop"
 
 #----------------------------------------
+# get pids
+@app.route("/pids")
+def req_pids_procs():
+    pids = TaskManager.get_instance().get_pids()
+
+    result = 'pids: {}'.format(os.getpid())
+
+    for pid in pids:
+        result += ' {}'.format(pid)
+
+    result += '\n'
+
+    return result
+
+#----------------------------------------
 # starter
 def start_runner():
     def start_loop():
@@ -47,6 +62,7 @@ def start_runner():
         while not_started:
 
             time.sleep(5)
+
             print('In start loop')
 
             r = requests.get('http://127.0.0.1:{}/load'.format(port_no))
