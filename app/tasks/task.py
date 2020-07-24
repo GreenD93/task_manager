@@ -192,9 +192,10 @@ class Task(Process):
 
         if self.q_in is not None:
 
-            if self.q_in.qsize():
+            # queue에 데이터가 있으면 get data
+            if not self.q_in.empty():
 
-                result = self.q_in.get()
+                result = self.q_in.get(block=True, timeout=self.wait_secs_on_queue)
 
                 if result is not None:
                     self.set_busy(True)
