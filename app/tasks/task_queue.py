@@ -20,7 +20,7 @@ class TaskQueue(object):
             self.name = 'queue_{:0d}'.format(TaskQueue.instance_count)
 
     def start(self):
-        print('TaskQueue.start')
+        log_info('TaskQueue.start')
         # 백그라운드로 큐가 돌게함
         self.q.close()
         self.q.join_thread()

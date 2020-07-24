@@ -82,7 +82,7 @@ class TaskManager():
     #----------------------------------------------
     # load_services
     def load_services(self, file_path):
-        print('TaskManager.load')
+        log_info('TaskManager.load')
         self.load_tasks_from_profile(file_path)
         self.start_watch_dog()
         pass
@@ -91,7 +91,7 @@ class TaskManager():
     # pause_services
     def pause_services(self):
 
-        print('TaskManager.pausing...')
+        log_info('TaskManager.pausing...')
         self.tasks_status = Status.FORCE_STOP_OR_PAUSE
 
         self.print_status()
@@ -104,7 +104,7 @@ class TaskManager():
 
         self.print_status()
 
-        print('TaskManager.paused')
+        log_info('TaskManager.paused')
 
         pass
 
@@ -112,7 +112,7 @@ class TaskManager():
     # stop_services
     def stop_services(self):
 
-        print('TaskManager.stopping...')
+        log_info('TaskManager.stopping...')
         self.tasks_status = Status.FORCE_STOP_OR_PAUSE
 
         #-------------------------------------
@@ -263,9 +263,9 @@ class TaskManager():
     # load_tasks
     def load_tasks(self, json_profile):
 
-        log_info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
-        log_info('>>> ACTIVE TASKS: {}'.format(self.active_tasks_name))
-        log_info('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        log_note('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+        log_note('>>> ACTIVE TASKS: {}'.format(self.active_tasks_name))
+        log_note('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
 
         if self.active_tasks_name == '':
             self.active_tasks_name = json_profile['commons']['active_tasks']
@@ -424,14 +424,14 @@ class TaskManager():
 
                     if _is_done():
 
-                        log_info('>>> WATCHDOG STOPPING TASKS...')
+                        log_note('>>> WATCHDOG STOPPING TASKS...')
                         self.tasks_status = Status.STOPPING
 
                         self.print_status()
 
                         _force_stop()
 
-                        log_info('>>> WATCHDOG STOPPED TASKS.')
+                        log_note('>>> WATCHDOG STOPPED TASKS.')
                         self.tasks_status = Status.STOPPED
 
                 time.sleep(WATCHDOG_INTERVAL)
@@ -472,7 +472,7 @@ class TaskManager():
 
             #---------------------------------------
             # 태스크 정지
-            log_info('>> [WATCHDOG] STOPPING TASKS...')
+            log_note('>> [WATCHDOG] STOPPING TASKS...')
 
             for task in arr_task:
                 task.stop()
@@ -480,23 +480,23 @@ class TaskManager():
             if len(arr_task) > 0:
                 time.sleep(WATCHDOG_SLEEP_ON_STOPPING)
 
-            log_info('>> [WATCHDOG] STOPPED TASKS')
+            log_note('>> [WATCHDOG] STOPPED TASKS')
 
             #---------------------------------------
             # 큐 정지
-            log_info('>> [WATCHDOG] STOPPING QUEUES...')
+            log_note('>> [WATCHDOG] STOPPING QUEUES...')
             for queue in arr_queue:
                 queue.stop()
 
             if len(arr_queue) > 0:
                 time.sleep(WATCHDOG_SLEEP_ON_STOPPING)
 
-            log_info('>> [WATCHDOG] STOPPED QUEUES')
+            log_note('>> [WATCHDOG] STOPPED QUEUES')
 
             pass
 
         if self.watch_dog_started:
-            log_info('>>> WATCHDOG ALREADY RUNNING !!!')
+            log_note('>>> WATCHDOG ALREADY RUNNING !!!')
             return
 
         self.watch_dog_started = True
@@ -551,27 +551,26 @@ class TaskManager():
                 per_sec = 0.0
                 per_count = 0.0
 
-            alive = 'true  ' if stat['alive'] else 'false '
-            busy = 'true  ' if stat['busy'] else 'false '
-            paused = 'true  ' if stat['paused'] else 'false '
+            alive = '$CYANtrue  $RESET' if stat['alive'] else '$MAGENTAfalse $RESET'
+            busy = '$CYANtrue  $RESET' if stat['busy'] else '$MAGENTAfalse $RESET'
+            paused = '$CYANtrue  $RESET' if stat['paused'] else '$MAGENTAfalse $RESET'
 
             cpu_f = int(stat['cpu'])
-
             if cpu_f == 0:
-                cpu = '{:8d}'.format(cpu_f)
+                cpu = '$MAGENTA{:8d}$RESET'.format(cpu_f)
             elif cpu_f > 100:
-                cpu = '{:8d}'.format(cpu_f)
+                cpu = '$YELLOW{:8d}$RESET'.format(cpu_f)
             else:
-                cpu = '{:8d}'.format(cpu_f)
+                cpu = '$CYAN{:8d}$RESET'.format(cpu_f)
 
             waiting_count = stat['waiting']
             if waiting_count == 0:
-                waiting_count = '{:8,}'.format(waiting_count)
+                waiting_count = '$MAGENTA{:8,}$RESET'.format(waiting_count)
             else:
-                waiting_count = '{:8,}'.format(waiting_count)
+                waiting_count = '$CYAN{:8,}$RESET'.format(waiting_count)
 
 
-            write_buf('{:16s}{}{}{}{:8d}{}{:8,}{}{:8.2f}{:8.4f}{:12,}'.format(
+            write_buf('{:16s}{}{}{}{:8d}{}{:8,}{}$YELLOW{:8.2f}$RESET{:8.4f}{:12,}'.format(
                 stat['name'],
                 alive,
                 busy,
@@ -589,14 +588,14 @@ class TaskManager():
         write_buf('--------------------------------------------------------------------------------------------------', buf)
 
         write_buf(
-            'STATUS:[{}]  COUNT: [{:,}]  ELAPSED: [{:.1f}] / [{:.1f}]'.format(
+            'STATUS:$BOLD$CYAN[{}]$RESET  COUNT: $YELLOW[{:,}]$RESET  ELAPSED:$BOLD$MAGENTA [{:.1f}]$RESET / $BOLD$GREEN[{:.1f}]$RESET'.format(
                 self.tasks_status,
                 (self.total_processed + max_processed),
                 dt,
                 dt_from_load,
             ), buf)
 
-        write_buf('TASKS:[{}]   IDX:[{}]'.format(self.current_tasks_name, self.container_idx, ), buf)
+        write_buf('TASKS:$BOLD$GREEN[{}]$RESET   IDX:$BOLD$GREEN[{}]$RESET'.format(self.current_tasks_name, self.container_idx, ), buf)
         write_buf('--------------------------------------------------------------------------------------------------', buf)
         write_buf('', buf)
 

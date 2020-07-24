@@ -8,33 +8,46 @@ import pytz
 from pprint import pprint
 from datetime import datetime
 
+#---------------------------------------------
+# print utilities
+
+RESET_SEQ   = "\033[0m"
+BOLD_SEQ    = "\033[1m"
+RED_SEQ     = "\033[1;31m"
+GREEN_SEQ   = "\033[1;32m"
+YELLOW_SEQ   = "\033[1;33m"
+BLUE_SEQ    = "\033[1;34m"
+MAGENTA_SEQ = "\033[1;35m"
+CYAN_SEQ    = "\033[1;36m"
+
+def replace_log_tag(s):
+    s = s.replace('$RESET', RESET_SEQ)
+    s = s.replace('$BOLD', BOLD_SEQ)
+    s = s.replace('$GREEN', GREEN_SEQ)
+    s = s.replace('$YELLOW', YELLOW_SEQ)
+    s = s.replace('$MAGENTA', MAGENTA_SEQ)
+    s = s.replace('$CYAN', CYAN_SEQ)
+    return s
+
 def init_logger():
     logging.basicConfig(level=logging.INFO, format='[%(levelname)s]%(asctime)s| %(message)s', datefmt='%m-%d %H:%M:%S')
     pass
 
 def log_info(s):
-
+    s = str(s)
+    s = replace_log_tag(s)
     logger = logging.getLogger("filelog")
     logger.info(s)
-
     pass
 
-def get_json_value(jsonData, key, default_value):
-    result = default_value
+def log_note(s):
+    s = str(s)
+    s = '$GREEN{}$RESET'.format(s)
+    log_info(s)
+    pass
 
-    if key in jsonData:
-        result = jsonData[key]
-
-    if result is None:
-        result = default_value
-
-    return result
-
-def file_to_json(path):
-    result = {}
-    with open(path) as data_file:
-        result = json.load(data_file)
-    return result
+#---------------------------------------------
+# time utilities
 
 def lap_time(msg, ct=None, log=True):
     t2 = time.time()
@@ -53,6 +66,23 @@ def lap_time(msg, ct=None, log=True):
 
 ############################################
 # file utilities
+
+def get_json_value(jsonData, key, default_value):
+    result = default_value
+
+    if key in jsonData:
+        result = jsonData[key]
+
+    if result is None:
+        result = default_value
+
+    return result
+
+def file_to_json(path):
+    result = {}
+    with open(path) as data_file:
+        result = json.load(data_file)
+    return result
 
 def check_or_create_folder_from_filepath(file_path):
     folder = os.path.dirname(file_path)
@@ -87,6 +117,7 @@ def get_filename(file_path):
 
 #-------------------------------------
 # write_buf
+
 def write_buf(s, buf):
     buf.write(s + '\n')
     pass
