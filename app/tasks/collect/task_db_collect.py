@@ -60,11 +60,7 @@ class TaskDBCollecter(Task):
 
         item_count = 0
 
-        for item in self.collector.get_items():
-
-            if item_count >= self.max_limit:
-                self.pause_event.set()
-                break
+        for item in self.collector.get_items(self.max_limit):
 
             # 만약 중지상태이면, 리턴
             if self.can_pause_or_stop():

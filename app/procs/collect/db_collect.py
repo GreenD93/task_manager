@@ -24,99 +24,105 @@ class DBCollector():
 
         pass
 
-    def get_items(self):
+    def get_items(self, max_limit):
 
-        db = get_db_connection(host=self.host, user=self.user, passwd=self.passwd, db=self.schema)
+        try:
 
-        #try:
-        with db.cursor() as curs:
-            curs.execute('SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED')
-            db.commit()
+            db = get_db_connection(host=self.host, user=self.user, passwd=self.passwd, db=self.schema)
 
-            has_next = True
+            #try:
+            with db.cursor() as curs:
+                curs.execute('SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED')
+                db.commit()
 
-            last_seq = -1
+                has_next = True
 
-            count = 0
-            can_stop = False
+                last_seq = -1
 
-            while has_next:
+                count = 0
+                can_stop = False
 
-                if last_seq == -1:
-                    last_seq = sys.maxsize
+                while has_next:
 
-                str_seq_filter = 't.seq < {}'.format(last_seq)
+                    if last_seq == -1:
+                        last_seq = sys.maxsize
 
-                sql = """
-                    SELECT
-                        t.seq,
-                        t.reviewId,
-                        t.image_url,
-                        t.score,
-                        t.label
+                    str_seq_filter = 't.seq < {}'.format(last_seq)
 
-                    FROM
-                        {0} t
+                    sql = """
+                        SELECT
+                            t.seq,
+                            t.reviewId,
+                            t.image_url,
+                            t.score,
+                            t.label
 
-                    WHERE
-                        {1}
+                        FROM
+                            {0} t
 
-                    ORDER BY
-                        t.seq DESC
+                        WHERE
+                            {1}
 
-                    LIMIT
-                        {2};
-                """.format(
-                    self.table,
-                    str_seq_filter,
-                    self.rows_per_page
-                )
+                        ORDER BY
+                            t.seq DESC
 
-                curs.execute(sql)
-                rows = curs.fetchall()
+                        LIMIT
+                            {2};
+                    """.format(
+                        self.table,
+                        str_seq_filter,
+                        self.rows_per_page
+                    )
 
-                item_count_in_page = len(rows)
+                    curs.execute(sql)
+                    rows = curs.fetchall()
 
-                if item_count_in_page < 50 or item_count_in_page == 0:
-                    has_next = False
+                    item_count_in_page = len(rows)
 
-                for row in rows:
-
-                    #---------------------------------------
-                    # 만약 종료상태이면, 종료
-                    if can_stop:
+                    if item_count_in_page < 50 or item_count_in_page == 0:
                         has_next = False
-                        break
 
-                    #---------------------------------------
-                    # 다음턴에서 반복을 종료할지 여부체크
-                    can_stop = (count >= self.max_limit)
+                    for row in rows:
 
-                    item_count_in_page += 1
+                        #---------------------------------------
+                        # 만약 종료상태이면, 종료
+                        if can_stop:
+                            has_next = False
+                            break
 
-                    seq = row[0]
-                    last_seq = seq
+                        #---------------------------------------
+                        # 다음턴에서 반복을 종료할지 여부체크
+                        can_stop = (count >= self.max_limit)
 
-                    review_id = row[1]
-                    image_url = row[2]
-                    score = row[3]
-                    label = row[4]
+                        item_count_in_page += 1
 
-                    result = {
-                        'seq': seq,
-                        'reviewid': review_id,
-                        'image_url': image_url,
-                        'score': score,
-                        'label': label
-                    }
+                        seq = row[0]
+                        last_seq = seq
 
-                    count += 1
+                        review_id = row[1]
+                        image_url = row[2]
+                        score = row[3]
+                        label = row[4]
 
-                    yield result
-        #
-        # except:
-        #     print('db collect error')
-        #
-        # finally:
-        #     if db is not None:
-        #         db.close()
+                        result = {
+                            'seq': seq,
+                            'reviewid': review_id,
+                            'image_url': image_url,
+                            'score': score,
+                            'label': label
+                        }
+
+                        count += 1
+
+                        if count > max_limit:
+                            has_next = False
+                            break
+
+                        yield result
+
+        except:
+            print('db collect error')
+
+        finally:
+            if db is not None:
+                db.close()

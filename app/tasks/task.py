@@ -32,7 +32,10 @@ class Task(Process):
         self.name = name
 
         self.container_idx = get_json_value(params, 'container_idx', 0)
+
         self.instance_id = get_json_value(params, 'instance_id', 0)
+
+        self.is_loop = get_json_value(params, 'loop', True)
 
         self.actor = actor
 
@@ -41,6 +44,8 @@ class Task(Process):
         self.q_in = get_json_value(params, 'q_in', None)
         self.q_out = get_json_value(params, 'q_out', None)
 
+        self.wait_secs_on_run = get_json_value(params, 'wait_secs_on_run', 0.001)
+        self.wait_secs_on_pause = get_json_value(params, 'wait_secs_on_pause', 1.0)
         self.wait_secs_on_queue = get_json_value(params, 'wait_secs_on_queue', 0.25)
 
         self.pause_event = Event()
@@ -139,20 +144,29 @@ class Task(Process):
                 self.init_lap_time()
                 self.pause_self()
                 log_info('[PAUSED] {} : sleeping'.format(self.name))
-                time.sleep(self.wait_secs_on_queue)
+                time.sleep(self.wait_secs_on_pause)
 
             # 만약 실행상태이면
             else:
 
                 self.check_lap_time()
 
-                if (self.q_in is not None) and (self.q_in.empty()):
+                if self.is_loop and (self.q_in is not None) and (self.q_in.empty()):
                     time.sleep(self.wait_secs_on_queue)
                     self.set_busy(False)
 
                 else:
                     self.run_self()
                     self.set_busy(False)
+
+                # 반복 task가 아니면, puase
+                if not self.is_loop:
+                    self.pause_event.set()
+
+                # 반복 task라면 잠깐 sleep
+                else:
+                    time.sleep(self.wait_secs_on_run)
+
 
         self.set_busy(False)
 

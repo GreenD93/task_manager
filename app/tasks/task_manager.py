@@ -307,7 +307,7 @@ class TaskManager():
 
             instance_count = get_json_value(json_task, 'instance_count', 1)
 
-            pauseable = get_json_value(json_task, 'pauseable', False)
+            is_loop = get_json_value(json_task, 'loop', True)
 
             str_q_in = get_json_value(json_task, 'q_in', '')
             str_q_out = get_json_value(json_task, 'q_out', '')
@@ -328,8 +328,7 @@ class TaskManager():
 
                 params['instance_id'] = i
                 params['instance_count'] = instance_count
-
-                params['pauseable'] = pauseable
+                params['loop'] = is_loop
 
                 params['q_in'] = q_in
                 params['q_out'] = q_out
@@ -422,6 +421,7 @@ class TaskManager():
 
                     time.sleep(WATCHDOG_INTERVAL)
 
+                    # 다시한번 종료조건 check
                     if _is_done():
 
                         log_note('>>> WATCHDOG STOPPING TASKS...')

@@ -48,8 +48,7 @@
       "instance_count": 1,
       "q_in": "",
       "q_out": "q0",
-      "loop": true,
-      "pauseable": true,
+      "loop": false,
 
       "params": {
         "host": "127.0.0.1",
@@ -59,7 +58,7 @@
         "table": "test",
 
         "max_limit": 40,
-        "wait_secs_on_queue": 10
+        "wait_secs_on_pause": 10
       }
     },
 
