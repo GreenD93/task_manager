@@ -60,6 +60,29 @@ def req_pids_procs():
     return result
 
 #----------------------------------------
+# kill all pids
+@app.route("/kill")
+def kill_pids_procs():
+
+    log_info('$CYAN#####################################################################$RESET')
+    log_info('$CYAN Kill all process $RESET')
+    log_info('$CYAN#####################################################################$RESET')
+
+    flask_pid = os.getpid()
+    pids = TaskManager.get_instance().get_pids()
+
+    for pid in pids:
+        p = psutil.Process(pid)
+        p.terminate()
+
+    log_info
+    # flask kill pid
+    p = psutil.Process(flask_pid)
+    p.terminate()
+
+    return 'kill all process'
+
+#----------------------------------------
 # starter
 def start_runner():
 
@@ -77,6 +100,7 @@ def start_runner():
             if r.status_code == 200:
                 log_info('Server started, quiting start_loop')
                 not_started = False
+
             print(r.status_code)
 
     log_info('Started runner')
